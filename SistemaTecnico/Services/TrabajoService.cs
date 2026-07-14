@@ -10,17 +10,20 @@ namespace SistemaTecnico.Services
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IClienteRepository _clienteRepository;
         private readonly IEstadoRepository _estadoRepository;
+        private readonly ITareaRepository _tareaRepository;
 
         public TrabajoService(
             ITrabajoRepository trabajoRepository,
             IUsuarioRepository usuarioRepository,
             IClienteRepository clienteRepository,
-            IEstadoRepository estadoRepository)
+            IEstadoRepository estadoRepository,
+            ITareaRepository tareaRepository)
         {
             _trabajoRepository = trabajoRepository;
             _usuarioRepository = usuarioRepository;
             _clienteRepository = clienteRepository;
             _estadoRepository = estadoRepository;
+            _tareaRepository = tareaRepository;
         }
 
         public async Task<IEnumerable<TrabajoResponseDto>> ObtenerTodosAsync()
@@ -42,7 +45,7 @@ namespace SistemaTecnico.Services
                 //IdTecnico = t.IdTecnico,
                 Tecnico = t.Tecnico.NombreApellido,
 
-                Tarea = t.Tarea,
+                Tarea = t.Tarea.Descripcion,
                 Comentarios = t.Comentarios,
                 TrabajoRealizado = t.TrabajoRealizado,
 
@@ -76,7 +79,7 @@ namespace SistemaTecnico.Services
                 //IdTecnico = t.IdTecnico,
                 Tecnico = t.Tecnico.NombreApellido,
 
-                Tarea = t.Tarea,
+                Tarea = t.Tarea.Descripcion,
                 Comentarios = t.Comentarios,
                 TrabajoRealizado = t.TrabajoRealizado,
 
@@ -108,7 +111,7 @@ namespace SistemaTecnico.Services
 
                 //IdSector = dto.IdSector,
 
-                Tarea = dto.Tarea,
+                Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea),
 
                 Comentarios = dto.Comentarios,
 
@@ -138,7 +141,7 @@ namespace SistemaTecnico.Services
 
             //trabajo.IdSector = dto.IdSector;
 
-            trabajo.Tarea = dto.Tarea;
+            //trabajo.Tarea = dto.IdTarea;
 
             trabajo.Comentarios = dto.Comentarios;
 

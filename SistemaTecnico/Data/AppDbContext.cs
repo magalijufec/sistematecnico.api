@@ -23,6 +23,7 @@ namespace SistemaTecnico.Data
         //public DbSet<Empresa> Empresas => Set<Empresa>();
 
         //public DbSet<Sector> Sectores => Set<Sector>();
+        public DbSet<Tarea> Tareas => Set<Tarea>();
 
         public DbSet<Trabajo> Trabajos => Set<Trabajo>();
 

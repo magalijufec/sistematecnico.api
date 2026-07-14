@@ -22,7 +22,7 @@
 
         public string? Sector { get; set; }
 
-        public string Tarea { get; set; } = string.Empty;
+        public string Tarea { get; set; }
 
         public string? Comentarios { get; set; }
 

@@ -14,7 +14,9 @@
 
         //public Sector? Sector { get; set; }
 
-        public string Tarea { get; set; }
+        //public int IdTarea { get; set; }
+
+        public Tarea Tarea { get; set; } = null!;
 
         public string? Comentarios { get; set; }
 

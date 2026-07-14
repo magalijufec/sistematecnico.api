@@ -10,20 +10,20 @@ namespace SistemaTecnico.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IdProvincia",
-                table: "Ciudades");
+            //migrationBuilder.DropColumn(
+            //    name: "IdProvincia",
+            //    table: "Ciudades");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "IdProvincia",
-                table: "Ciudades",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            //migrationBuilder.AddColumn<int>(
+            //    name: "IdProvincia",
+            //    table: "Ciudades",
+            //    type: "int",
+            //    nullable: false,
+            //    defaultValue: 0);
         }
     }
 }

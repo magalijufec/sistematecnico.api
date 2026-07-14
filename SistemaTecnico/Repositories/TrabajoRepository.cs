@@ -33,10 +33,11 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Estado)
             //.Include(t => t.Sector)
             .Include(t => t.Imagenes)
+            .Include(t => t.Tarea)
             //.Include(t => t.HistorialEstados)
             //    .ThenInclude(h => h.Usuario)
             //.Include(t => t.HistorialEstados)
-               // .ThenInclude(h => h.Estado)
+            // .ThenInclude(h => h.Estado)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id);
     }

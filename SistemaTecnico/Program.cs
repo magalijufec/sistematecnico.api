@@ -28,6 +28,10 @@ builder.Services.AddScoped<ITrabajoRepository, TrabajoRepository>();
 builder.Services.AddScoped<ITrabajoService, TrabajoService>();
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IEstadoRepository, EstadoRepository>();
+builder.Services.AddScoped<IImagenRepository, ImagenRepository>();
+
+builder.Services.AddScoped<IImagenService, ImagenService>();
+builder.Services.AddScoped<ITareaRepository, TareaRepository>();
 
 var app = builder.Build();
 

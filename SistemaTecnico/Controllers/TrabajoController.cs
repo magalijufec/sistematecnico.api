@@ -9,10 +9,12 @@ namespace SistemaTecnico.Controllers;
 public class TrabajoController : ControllerBase
 {
     private readonly ITrabajoService _trabajoService;
+    private readonly IImagenService _imagenService;
 
-    public TrabajoController(ITrabajoService trabajoService)
+    public TrabajoController(ITrabajoService trabajoService, IImagenService imagenService)
     {
         _trabajoService = trabajoService;
+        _imagenService = imagenService;
     }
 
     [HttpGet]
@@ -70,5 +72,19 @@ public class TrabajoController : ControllerBase
             return NotFound();
 
         return NoContent();
+    }
+
+    [HttpPost("{id}/imagenes")]
+    public async Task<IActionResult> SubirImagenes(
+    int id,
+    [FromForm] List<IFormFile> archivos,
+    [FromForm] string tipo)
+    {
+        await _imagenService.SubirImagenesAsync(
+            id,
+            archivos
+            );
+
+        return Ok();
     }
 }

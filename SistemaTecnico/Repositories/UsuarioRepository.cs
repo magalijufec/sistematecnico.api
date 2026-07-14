@@ -31,13 +31,13 @@ namespace SistemaTecnico.Repositories
                 .Include(x => x.Provincia)
                 .Include(x => x.Ciudad)
                 //.Include(x => x.Sector)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
         }
 
         public async Task<Usuario?> ObtenerPorUsuarioAsync(string userName)
         {
             return await _context.Usuarios
-                .FirstOrDefaultAsync(x => x.UserName == userName);
+                .FirstOrDefaultAsync(x => x.UserName == userName && x.Activo);
         }
 
         public async Task AgregarAsync(UsuarioDTO usuario)
@@ -71,7 +71,7 @@ namespace SistemaTecnico.Repositories
 
         public async Task<bool> ExisteAsync(int id)
         {
-            return await _context.Usuarios.AnyAsync(x => x.Id == id);
+            return await _context.Usuarios.AnyAsync(x => x.Id == id && x.Activo);
         }
 
         public async Task GuardarCambiosAsync()

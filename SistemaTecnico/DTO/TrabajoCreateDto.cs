@@ -10,7 +10,7 @@
 
         //public int? IdSector { get; set; }
 
-        public string Tarea { get; set; } = string.Empty;
+        public int IdTarea { get; set; }
 
         public string? Comentarios { get; set; }
     }
