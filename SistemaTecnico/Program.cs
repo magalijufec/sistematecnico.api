@@ -24,6 +24,11 @@ builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
+builder.Services.AddScoped<ITrabajoRepository, TrabajoRepository>();
+builder.Services.AddScoped<ITrabajoService, TrabajoService>();
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<IEstadoRepository, EstadoRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
