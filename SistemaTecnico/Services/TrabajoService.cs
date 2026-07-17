@@ -38,6 +38,7 @@ namespace SistemaTecnico.Services
 
                 //IdEstado = t.IdEstado,
                 Estado = t.Estado.Nombre,
+                EstadoColor = t.Estado.Color,
 
                 //IdCliente = t.IdCliente,
                 Cliente = t.Cliente.Nombre,
@@ -46,7 +47,7 @@ namespace SistemaTecnico.Services
                 Tecnico = t.Tecnico.NombreApellido,
 
                 Tarea = t.Tarea.Descripcion,
-                Comentarios = t.Comentarios,
+                //Comentarios = t.Comentarios,
                 TrabajoRealizado = t.TrabajoRealizado,
 
                 //Sector = t.Sector?.Nombre,
@@ -72,6 +73,7 @@ namespace SistemaTecnico.Services
 
                 //IdEstado = t.IdEstado,
                 Estado = t.Estado.Nombre,
+                EstadoColor = t.Estado.Color,
 
                 //IdCliente = t.IdCliente,
                 Cliente = t.Cliente.Nombre,

@@ -64,5 +64,12 @@ namespace SistemaTecnico.Controllers
 
             return NoContent();
         }
+
+
+        [HttpGet("tecnicos")]
+        public async Task<IActionResult> ObtenerTecnicos()
+        {
+            return Ok(await _service.ObtenerTecnicosAsync());
+        }
     }
 }

@@ -78,5 +78,13 @@ namespace SistemaTecnico.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<Usuario>> ObtenerTecnicosAsync()
+        {
+            return await _context.Usuarios
+                .Where(x => x.Perfil.Id == 2 && x.Activo)
+                .OrderBy(x => x.NombreApellido)
+                .ToListAsync();
+        }
     }
 }

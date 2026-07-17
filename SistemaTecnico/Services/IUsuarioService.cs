@@ -5,14 +5,15 @@ namespace SistemaTecnico.Services
 {
     public interface IUsuarioService
     {
-        Task<IEnumerable<Usuario>> ObtenerTodosAsync();
+        Task<IEnumerable<UsuarioResponseDTO>> ObtenerTodosAsync();
 
-        Task<Usuario?> ObtenerPorIdAsync(int id);
+        Task<UsuarioResponseDTO> ObtenerPorIdAsync(int id);
 
         Task CrearAsync(UsuarioDTO usuario);
 
         Task<bool> ActualizarAsync(int id, UsuarioDTO usuario);
 
         Task<bool> EliminarAsync(int id);
+        Task<IEnumerable<ComboDto>> ObtenerTecnicosAsync();
     }
 }

@@ -20,5 +20,7 @@ namespace SistemaTecnico.Repositories
         Task<bool> ExisteAsync(int id);
 
         Task GuardarCambiosAsync();
+
+        Task<IEnumerable<Usuario>> ObtenerTecnicosAsync();
     }
 }

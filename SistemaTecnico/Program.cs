@@ -10,6 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Angular",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:4200")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -33,6 +45,10 @@ builder.Services.AddScoped<IImagenRepository, ImagenRepository>();
 builder.Services.AddScoped<IImagenService, ImagenService>();
 builder.Services.AddScoped<ITareaRepository, TareaRepository>();
 
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -43,6 +59,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("Angular");
 
 app.UseAuthorization();
 

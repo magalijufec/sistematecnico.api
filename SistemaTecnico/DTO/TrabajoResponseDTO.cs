@@ -9,6 +9,7 @@
         public DateTime? FechaTrabajo { get; set; }
 
         public string Estado { get; set; } = string.Empty;
+        public string EstadoColor { get; set; }
 
         public int IdEstado { get; set; }
 

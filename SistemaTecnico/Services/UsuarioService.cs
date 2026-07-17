@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
@@ -13,14 +14,39 @@ namespace SistemaTecnico.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<Usuario>> ObtenerTodosAsync()
+        public async Task<IEnumerable<UsuarioResponseDTO>> ObtenerTodosAsync()
         {
-            return await _repository.ObtenerTodosAsync();
+            var users = await _repository.ObtenerTodosAsync();
+            return users
+                .Select(x => new UsuarioResponseDTO
+                {
+                    Id = x.Id,
+                    NombreApellido = x.NombreApellido,
+                    UserName = x.UserName,
+                    Email = x.Email,
+                    Perfil = x.Perfil.Nombre,
+                    Provincia = x.Provincia.Nombre,
+                    Ciudad = x.Ciudad.Nombre,
+                    Activo = x.Activo
+                });
         }
 
-        public async Task<Usuario?> ObtenerPorIdAsync(int id)
+        public async Task<UsuarioResponseDTO?> ObtenerPorIdAsync(int id)
         {
-            return await _repository.ObtenerPorIdAsync(id);
+            var user = await _repository.ObtenerPorIdAsync(id);
+            if (user == null) return null;
+
+            return new UsuarioResponseDTO
+            {
+                Id = user.Id,
+                NombreApellido = user.NombreApellido,
+                UserName = user.UserName,
+                Email = user.Email,
+                Perfil = user.Perfil.Nombre,
+                Provincia = user.Provincia.Nombre,
+                Ciudad = user.Ciudad.Nombre,
+                Activo = user.Activo
+            };
         }
 
         public async Task CrearAsync(UsuarioDTO usuario)
@@ -60,6 +86,17 @@ namespace SistemaTecnico.Services
             await _repository.GuardarCambiosAsync();
 
             return true;
+        }
+
+        public async Task<IEnumerable<ComboDto>> ObtenerTecnicosAsync()
+        {
+            var usuarios = await _repository.ObtenerTecnicosAsync();
+
+            return usuarios.Select(x => new ComboDto
+            {
+                Id = x.Id,
+                Nombre = x.NombreApellido
+            });
         }
     }
 }

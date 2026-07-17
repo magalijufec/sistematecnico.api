@@ -18,9 +18,9 @@ namespace SistemaTecnico.Models
 
         public Perfil Perfil { get; set; } = null!;
 
-        public Provincia? Provincia { get; set; }
+        public Provincia Provincia { get; set; }
 
-        public Ciudad? Ciudad { get; set; }
+        public Ciudad Ciudad { get; set; }
 
         //public IList<Trabajo> Trabajos { get; set; } = new List<Trabajo>();
 

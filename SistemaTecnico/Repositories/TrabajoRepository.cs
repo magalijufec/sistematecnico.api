@@ -21,6 +21,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Estado)
             //.Include(t => t.Sector)
             .Include(t => t.Imagenes)
+            .Include(t => t.Tarea)
             .AsNoTracking()
             .ToListAsync();
     }
