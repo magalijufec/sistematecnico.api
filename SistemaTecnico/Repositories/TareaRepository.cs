@@ -12,10 +12,17 @@ namespace SistemaTecnico.Repositories
         {
             _context = context;
         }
+
         public async Task<Tarea> ObtenerPorIdAsync(int id)
         {
             return _context.Tareas
                 .FirstOrDefault(x => x.Id == id);
+        }
+
+        public async Task<IEnumerable<Tarea>> ObtenerTodasAsync()
+        {
+            return await _context.Tareas
+                .ToListAsync();
         }
     }
 }

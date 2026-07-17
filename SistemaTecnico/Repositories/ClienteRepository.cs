@@ -13,6 +13,12 @@ namespace SistemaTecnico.Repositories
             _context = context;
         }
 
+        public async Task<IEnumerable<Cliente>> ObtenerTodosAsync()
+        {
+            return await _context.Clientes
+                .ToListAsync();
+        }
+
         public async Task<Cliente?> ObtenerPorIdAsync(int id)
         {
             return await _context.Clientes

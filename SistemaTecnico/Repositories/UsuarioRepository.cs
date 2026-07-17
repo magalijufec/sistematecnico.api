@@ -82,7 +82,7 @@ namespace SistemaTecnico.Repositories
         public async Task<IEnumerable<Usuario>> ObtenerTecnicosAsync()
         {
             return await _context.Usuarios
-                .Where(x => x.Perfil.Id == 2 && x.Activo)
+                .Where(x => x.Perfil.Id == 7 && x.Activo)
                 .OrderBy(x => x.NombreApellido)
                 .ToListAsync();
         }
