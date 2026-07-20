@@ -1,4 +1,5 @@
-﻿using SistemaTecnico.DTO;
+﻿using Microsoft.EntityFrameworkCore;
+using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 
@@ -35,25 +36,13 @@ namespace SistemaTecnico.Services
                 Id = t.Id,
                 FechaSolicitud = t.FechaSolicitud,
                 FechaTrabajo = t.FechaTrabajo,
-
-                //IdEstado = t.IdEstado,
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
-
-                //IdCliente = t.IdCliente,
-                Cliente = t.Cliente.Nombre,
-
-                //IdTecnico = t.IdTecnico,
+                Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
                 Tecnico = t.Tecnico.NombreApellido,
-
                 Tarea = t.Tarea.Descripcion,
-                //Comentarios = t.Comentarios,
                 TrabajoRealizado = t.TrabajoRealizado,
-
-                //Sector = t.Sector?.Nombre,
-
                 TieneFactura = !string.IsNullOrEmpty(t.Factura),
-
                 CantidadImagenes = t.Imagenes.Count
             });
         }
@@ -75,12 +64,13 @@ namespace SistemaTecnico.Services
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
 
-                //IdCliente = t.IdCliente,
+                IdCliente = t.Cliente.Id,
                 Cliente = t.Cliente.Nombre,
 
-                //IdTecnico = t.IdTecnico,
+                IdTecnico = t.Tecnico.Id,
                 Tecnico = t.Tecnico.NombreApellido,
 
+                IdTarea = t.Tarea.Id,
                 Tarea = t.Tarea.Descripcion,
                 Comentarios = t.Comentarios,
                 TrabajoRealizado = t.TrabajoRealizado,
@@ -137,13 +127,11 @@ namespace SistemaTecnico.Services
 
             trabajo.FechaTrabajo = dto.FechaTrabajo;
 
-            //trabajo.IdTecnico = dto.IdTecnico;
+            trabajo.Tecnico = await _usuarioRepository.ObtenerPorIdAsync(dto.IdTecnico);
 
-            //trabajo.IdCliente = dto.IdCliente;
+            trabajo.Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente);
 
-            //trabajo.IdSector = dto.IdSector;
-
-            //trabajo.Tarea = dto.IdTarea;
+            trabajo.Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea);
 
             trabajo.Comentarios = dto.Comentarios;
 
@@ -168,6 +156,20 @@ namespace SistemaTecnico.Services
             await _trabajoRepository.GuardarCambiosAsync();
 
             return true;
+        }
+
+        public async Task CambiarEstadoAsync(int idTrabajo, CambiarEstadoDTO dto)
+        {
+            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(dto.IdEstado);
+
+            await _trabajoRepository.CambiarEstadoAsync(idTrabajo, estado);
+        }
+
+        public async Task GuardarTrabajoRealizado(
+            int id,
+            TrabajoRealizadoDTO dto)
+        {
+            await _trabajoRepository.GuardarTrabajoRealizado(id, dto);
         }
     }
 }

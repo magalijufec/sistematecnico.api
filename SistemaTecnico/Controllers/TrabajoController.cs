@@ -87,4 +87,23 @@ public class TrabajoController : ControllerBase
 
         return Ok();
     }
+
+    [HttpPut("{id}/estado")]
+    public async Task<IActionResult> CambiarEstado(
+    int id,
+    CambiarEstadoDTO dto)
+    {
+        await _trabajoService.CambiarEstadoAsync(id, dto);
+
+        return NoContent();
+    }
+
+    [HttpPut("{id}/trabajo-realizado")]
+    public async Task<IActionResult> GuardarTrabajoRealizado(
+    int id,
+    TrabajoRealizadoDTO dto)
+    {
+        await _trabajoService.GuardarTrabajoRealizado(id, dto);
+        return NoContent();
+    }
 }

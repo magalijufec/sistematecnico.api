@@ -88,11 +88,11 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task<IEnumerable<ComboDto>> ObtenerTecnicosAsync()
+        public async Task<IEnumerable<ComboDTO>> ObtenerTecnicosAsync()
         {
             var usuarios = await _repository.ObtenerTecnicosAsync();
 
-            return usuarios.Select(x => new ComboDto
+            return usuarios.Select(x => new ComboDTO
             {
                 Id = x.Id,
                 Nombre = x.NombreApellido

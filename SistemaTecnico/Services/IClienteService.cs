@@ -4,6 +4,6 @@ namespace SistemaTecnico.Services
 {
     public interface IClienteService
     {
-        Task<IEnumerable<ComboDto>> ObtenerComboAsync();
+        Task<IEnumerable<ComboDTO>> ObtenerComboAsync();
     }
 }

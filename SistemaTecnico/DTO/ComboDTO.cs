@@ -1,6 +1,6 @@
 ﻿namespace SistemaTecnico.DTO
 {
-    public class ComboDto
+    public class ComboDTO
     {
         public int Id { get; set; }
 

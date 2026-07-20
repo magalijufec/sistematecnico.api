@@ -11,16 +11,16 @@ namespace SistemaTecnico.Services
         {
             _repository = repository;
         }
-        public async Task<IEnumerable<ComboDto>> ObtenerComboAsync()
+        public async Task<IEnumerable<ComboDTO>> ObtenerComboAsync()
         {
             var clientes = await _repository.ObtenerTodosAsync();
 
             return clientes
                 .OrderBy(x => x.Nombre)
-                .Select(x => new ComboDto
+                .Select(x => new ComboDTO
                 {
                     Id = x.Id,
-                    Nombre = x.Nombre
+                    Nombre = x.NroCliente + " "+ x.Nombre
                 });
         }
     }

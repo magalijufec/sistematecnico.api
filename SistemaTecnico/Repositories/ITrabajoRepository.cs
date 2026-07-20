@@ -1,4 +1,5 @@
-﻿using SistemaTecnico.Models;
+﻿using SistemaTecnico.DTO;
+using SistemaTecnico.Models;
 
 namespace SistemaTecnico.Repositories;
 
@@ -23,4 +24,8 @@ public interface ITrabajoRepository
     Task<IEnumerable<Trabajo>> ObtenerPorTecnicoAsync(int idTecnico);
 
     Task<IEnumerable<Trabajo>> ObtenerPorFechasAsync(DateTime desde, DateTime hasta);
+
+    Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado);
+
+    Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
 }

@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SistemaTecnico.Data;
+using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
 
 namespace SistemaTecnico.Repositories;
@@ -100,5 +102,31 @@ public class TrabajoRepository : ITrabajoRepository
                         t.FechaSolicitud <= hasta)
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public async Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado)
+    {
+        var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
+
+        if (trabajo == null)
+            throw new Exception("Trabajo no encontrado");
+
+        trabajo.Estado = estado;
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task GuardarTrabajoRealizado(
+            int id,
+            TrabajoRealizadoDTO dto)
+    {
+        var trabajo = await _context.Trabajos.FindAsync(id);
+
+        if (trabajo == null)
+            throw new Exception("Trabajo no encontrado");
+
+        trabajo.TrabajoRealizado = dto.TrabajoRealizado;
+
+        await _context.SaveChangesAsync();
     }
 }

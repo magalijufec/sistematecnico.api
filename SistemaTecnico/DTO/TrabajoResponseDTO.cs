@@ -22,6 +22,7 @@
         public string Cliente { get; set; } = string.Empty;
 
         public string? Sector { get; set; }
+        public int IdTarea { get; set; }
 
         public string Tarea { get; set; }
 

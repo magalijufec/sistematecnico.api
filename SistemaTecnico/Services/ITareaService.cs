@@ -4,6 +4,6 @@ namespace SistemaTecnico.Services
 {
     public interface ITareaService
     {
-        Task<IEnumerable<ComboDto>> ObtenerTodasAsync();
+        Task<IEnumerable<ComboDTO>> ObtenerTodasAsync();
     }
 }

@@ -13,5 +13,9 @@ namespace SistemaTecnico.Services
         Task<bool> ActualizarAsync(int id, TrabajoUpdateDto dto);
 
         Task<bool> EliminarAsync(int id);
+
+        Task CambiarEstadoAsync(int idTrabajo, CambiarEstadoDTO dto);
+
+        Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
     }
 }

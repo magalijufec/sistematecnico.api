@@ -14,6 +14,6 @@ namespace SistemaTecnico.Services
         Task<bool> ActualizarAsync(int id, UsuarioDTO usuario);
 
         Task<bool> EliminarAsync(int id);
-        Task<IEnumerable<ComboDto>> ObtenerTecnicosAsync();
+        Task<IEnumerable<ComboDTO>> ObtenerTecnicosAsync();
     }
 }

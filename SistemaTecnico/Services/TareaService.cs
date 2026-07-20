@@ -10,11 +10,11 @@ namespace SistemaTecnico.Services
         {
             _repository = repository;
         }
-        public async Task<IEnumerable<ComboDto>> ObtenerTodasAsync()
+        public async Task<IEnumerable<ComboDTO>> ObtenerTodasAsync()
         {
             var tareas = await _repository.ObtenerTodasAsync();
 
-            return tareas.Select(x => new ComboDto
+            return tareas.Select(x => new ComboDTO
             {
                 Id = x.Id,
                 Nombre = x.Descripcion
