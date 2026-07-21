@@ -11,6 +11,7 @@ namespace SistemaTecnico.Repositories
         Task AgregarAsync(Imagen imagen);
 
         Task EliminarAsync(Imagen imagen);
+        Task EliminarImagenAsync(int id);
 
         Task GuardarCambiosAsync();
     }

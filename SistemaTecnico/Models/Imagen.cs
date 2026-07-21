@@ -5,6 +5,7 @@
         public int Id { get; set; }
 
         public Trabajo Trabajo { get; set; } = null!;
+        public int TrabajoId { get; set; }
 
         public string Tipo { get; set; } = string.Empty;
 
@@ -17,6 +18,8 @@
         public long Tamanio { get; set; }
 
         public DateTime FechaCarga { get; set; }
+
+        public bool EsAntes { get; set; }
 
     }
 }

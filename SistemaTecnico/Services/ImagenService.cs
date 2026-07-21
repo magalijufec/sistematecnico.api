@@ -1,4 +1,5 @@
-﻿using SistemaTecnico.DTO;
+﻿using Microsoft.EntityFrameworkCore;
+using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 
@@ -35,60 +36,96 @@ namespace SistemaTecnico.Services
                 RutaArchivo = i.RutaArchivo,
                 Extension = i.Extension,
                 Tamanio = i.Tamanio,
-                FechaCarga = i.FechaCarga
+                FechaCarga = i.FechaCarga                
             }).ToList();
         }
 
-        public async Task SubirImagenesAsync(
-            int idTrabajo,
-            List<IFormFile> archivos,
-            string tipo)
+        public async Task<List<Imagen>> ObtenerPorTrabajo(int idTrabajo)
         {
-            if (!await _trabajoRepository.ExisteAsync(idTrabajo))
-                throw new Exception("El trabajo no existe.");
+            return await _imagenRepository.ObtenerPorTrabajoAsync(idTrabajo);
+        }
 
-            string carpetaTrabajo =
-                Path.Combine(
-                    _environment.WebRootPath,
-                    "uploads",
-                    "trabajos",
-                    idTrabajo.ToString());
+        public async Task SubirImagenes(
+       int idTrabajo,
+       bool antes,
+       List<IFormFile> archivos)
+        {
+            if (archivos == null || archivos.Count == 0)
+                throw new ArgumentException("No se recibieron archivos.");
 
-            if (!Directory.Exists(carpetaTrabajo))
-                Directory.CreateDirectory(carpetaTrabajo);
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                throw new KeyNotFoundException(
+                    $"No existe el trabajo con ID {idTrabajo}");
+
+            string tipoCarpeta = antes
+                ? "antes"
+                : "despues";
+
+            string carpeta = Path.Combine(
+                _environment.ContentRootPath,
+                "wwwroot",
+                "uploads",
+                "trabajos",
+                idTrabajo.ToString(),
+                tipoCarpeta
+            );
+
+            Directory.CreateDirectory(carpeta);
 
             foreach (var archivo in archivos)
             {
-                var nombreArchivo =
-                    $"{Guid.NewGuid()}{Path.GetExtension(archivo.FileName)}";
+                if (archivo == null || archivo.Length == 0)
+                    continue;
 
-                var rutaFisica =
-                    Path.Combine(carpetaTrabajo, nombreArchivo);
+                string extension =
+                    Path.GetExtension(archivo.FileName);
+
+                string nombreArchivo =
+                    $"{Guid.NewGuid()}{extension}";
+
+                string rutaFisica =
+                    Path.Combine(
+                        carpeta,
+                        nombreArchivo
+                    );
 
                 using var stream =
-                    new FileStream(rutaFisica, FileMode.Create);
+                    new FileStream(
+                        rutaFisica,
+                        FileMode.Create
+                    );
 
                 await archivo.CopyToAsync(stream);
 
                 var imagen = new Imagen
                 {
-                    Tipo = tipo,
+                    TrabajoId = idTrabajo,
+                    //Trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo),
 
-                    NombreArchivo = nombreArchivo,
+                    EsAntes = antes,
 
-                    RutaArchivo =
-                        Path.Combine(
-                            "uploads",
-                            "trabajos",
-                            idTrabajo.ToString(),
-                            nombreArchivo),
+                    NombreArchivo =
+                        archivo.FileName,
 
                     Extension =
-                        Path.GetExtension(archivo.FileName),
+                        extension,
 
-                    Tamanio = archivo.Length,
+                    Tipo =
+                        archivo.ContentType,
 
-                    FechaCarga = DateTime.Now
+                    Tamanio =
+                        archivo.Length,
+
+                    FechaCarga =
+                        DateTime.Now,
+
+                    RutaArchivo =
+                        $"/uploads/trabajos/" +
+                        $"{idTrabajo}/" +
+                        $"{tipoCarpeta}/" +
+                        $"{nombreArchivo}"
                 };
 
                 await _imagenRepository.AgregarAsync(imagen);
@@ -97,37 +134,35 @@ namespace SistemaTecnico.Services
             await _imagenRepository.GuardarCambiosAsync();
         }
 
-        public async Task<bool> EliminarImagenAsync(int idImagen)
+        //public async Task<bool> EliminarImagenAsync(int idImagen)
+        //{
+        //    var imagen =
+        //        await _imagenRepository.ObtenerPorIdAsync(idImagen);
+
+        //    if (imagen == null)
+        //        return false;
+
+        //    string rutaFisica =
+        //        Path.Combine(
+        //            _environment.WebRootPath,
+        //            imagen.RutaArchivo);
+
+        //    if (File.Exists(rutaFisica))
+        //        File.Delete(rutaFisica);
+
+        //    await _imagenRepository.EliminarAsync(imagen);
+
+        //    await _imagenRepository.GuardarCambiosAsync();
+
+        //    return true;
+        //}
+
+
+        public async Task EliminarImagenAsync(int idImagen)
         {
-            var imagen =
-                await _imagenRepository.ObtenerPorIdAsync(idImagen);
-
-            if (imagen == null)
-                return false;
-
-            string rutaFisica =
-                Path.Combine(
-                    _environment.WebRootPath,
-                    imagen.RutaArchivo);
-
-            if (File.Exists(rutaFisica))
-                File.Delete(rutaFisica);
-
-            await _imagenRepository.EliminarAsync(imagen);
+            await _imagenRepository.EliminarImagenAsync(idImagen);
 
             await _imagenRepository.GuardarCambiosAsync();
-
-            return true;
-        }
-
-        public Task SubirImagenesAsync(int idTrabajo, List<IFormFile> archivos)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task IImagenService.EliminarImagenAsync(int idImagen)
-        {
-            return EliminarImagenAsync(idImagen);
         }
     }
 }

@@ -76,22 +76,33 @@ public class TrabajoController : ControllerBase
 
     [HttpPost("{id}/imagenes")]
     public async Task<IActionResult> SubirImagenes(
-    int id,
-    [FromForm] List<IFormFile> archivos,
-    [FromForm] string tipo)
+        int id,
+        [FromForm] bool antes,
+        [FromForm] List<IFormFile> archivos)
     {
-        await _imagenService.SubirImagenesAsync(
-            id,
-            archivos
-            );
+        await _imagenService.SubirImagenes(id, antes, archivos);
 
         return Ok();
     }
 
+    [HttpGet("{id}/imagenes")]
+    public async Task<IActionResult> Obtener(int id)
+    {
+        return Ok(await _imagenService.ObtenerPorTrabajo(id));
+    }
+
+    [HttpDelete("imagenes/{idImagen}")]
+    public async Task<IActionResult> Eliminar(int idImagen)
+    {
+        await _imagenService.EliminarImagenAsync(idImagen);
+
+        return NoContent();
+    }
+
     [HttpPut("{id}/estado")]
     public async Task<IActionResult> CambiarEstado(
-    int id,
-    CambiarEstadoDTO dto)
+        int id,
+        CambiarEstadoDTO dto)
     {
         await _trabajoService.CambiarEstadoAsync(id, dto);
 

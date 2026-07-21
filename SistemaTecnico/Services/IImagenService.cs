@@ -1,4 +1,5 @@
 ﻿using SistemaTecnico.DTO;
+using SistemaTecnico.Models;
 
 namespace SistemaTecnico.Services
 {
@@ -6,7 +7,12 @@ namespace SistemaTecnico.Services
     {
         Task<List<ImagenResponseDto>> ObtenerImagenesAsync(int idTrabajo);
 
-        Task SubirImagenesAsync(int idTrabajo, List<IFormFile> archivos);
+        Task<List<Imagen>> ObtenerPorTrabajo(int idTrabajo);
+
+        Task SubirImagenes(
+        int idTrabajo,
+        bool antes,
+        List<IFormFile> archivos);
 
         Task EliminarImagenAsync(int idImagen);
     }

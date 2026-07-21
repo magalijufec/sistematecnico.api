@@ -36,6 +36,14 @@ namespace SistemaTecnico.Repositories
             return Task.CompletedTask;
         }
 
+        public async Task EliminarImagenAsync(int id)
+        {
+            var imagen = await _context.Imagenes.FindAsync(id);
+
+            if (imagen != null)
+                _context.Imagenes.Remove(imagen);
+        }
+
         public async Task GuardarCambiosAsync()
         {
             await _context.SaveChangesAsync();
