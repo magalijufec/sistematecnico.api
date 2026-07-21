@@ -28,4 +28,5 @@ public interface ITrabajoRepository
     Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado);
 
     Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
+    Task RegistrarPagoAsync(int idTrabajo);
 }

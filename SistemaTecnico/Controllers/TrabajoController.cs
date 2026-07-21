@@ -147,4 +147,19 @@ public class TrabajoController : ControllerBase
             });
         }
     }
+
+    [HttpPut("{id}/registrar-pago")]
+    public async Task<IActionResult> RegistrarPago(int id)
+    {
+        try
+        {
+            await _trabajoService.RegistrarPagoAsync(id);
+
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
 }

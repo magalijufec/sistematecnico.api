@@ -129,4 +129,18 @@ public class TrabajoRepository : ITrabajoRepository
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task RegistrarPagoAsync(int idTrabajo)
+    {
+        var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
+        if (trabajo == null)
+            throw new KeyNotFoundException(
+                $"No existe el trabajo con ID {idTrabajo}");
+
+        trabajo.FechaPagado = DateTime.Now;
+        var estado = await _context.EstadosTrabajo.FindAsync(4); // Finalizado
+        trabajo.Estado = estado;
+
+        await _context.SaveChangesAsync();
+    }
 }

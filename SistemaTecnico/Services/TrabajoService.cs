@@ -262,5 +262,10 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.GuardarCambiosAsync();
         }
+
+        public async Task RegistrarPagoAsync(int idTrabajo)
+        {
+            await _trabajoRepository.RegistrarPagoAsync(idTrabajo);
+        }
     }
 }
