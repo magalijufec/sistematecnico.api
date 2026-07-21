@@ -117,4 +117,34 @@ public class TrabajoController : ControllerBase
         await _trabajoService.GuardarTrabajoRealizado(id, dto);
         return NoContent();
     }
+
+    [HttpPost("{id}/factura")]
+    public async Task<IActionResult> SubirFactura(
+    int id,
+    IFormFile archivo)
+    {
+        try
+        {
+            await _trabajoService.SubirFacturaAsync(id, archivo);
+
+            return Ok(new
+            {
+                mensaje = "Factura cargada correctamente"
+            });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                mensaje = ex.Message
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+    }
 }

@@ -17,5 +17,7 @@ namespace SistemaTecnico.Services
         Task CambiarEstadoAsync(int idTrabajo, CambiarEstadoDTO dto);
 
         Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
-    }
+
+        Task SubirFacturaAsync(int idTrabajo, IFormFile archivo);
+        }
 }

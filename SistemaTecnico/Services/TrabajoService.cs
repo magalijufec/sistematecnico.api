@@ -12,19 +12,22 @@ namespace SistemaTecnico.Services
         private readonly IClienteRepository _clienteRepository;
         private readonly IEstadoRepository _estadoRepository;
         private readonly ITareaRepository _tareaRepository;
+        private readonly IWebHostEnvironment _environment;
 
         public TrabajoService(
             ITrabajoRepository trabajoRepository,
             IUsuarioRepository usuarioRepository,
             IClienteRepository clienteRepository,
             IEstadoRepository estadoRepository,
-            ITareaRepository tareaRepository)
+            ITareaRepository tareaRepository,
+            IWebHostEnvironment environment)
         {
             _trabajoRepository = trabajoRepository;
             _usuarioRepository = usuarioRepository;
             _clienteRepository = clienteRepository;
             _estadoRepository = estadoRepository;
             _tareaRepository = tareaRepository;
+            _environment = environment;
         }
 
         public async Task<IEnumerable<TrabajoResponseDto>> ObtenerTodosAsync()
@@ -59,26 +62,20 @@ namespace SistemaTecnico.Services
                 Id = t.Id,
                 FechaSolicitud = t.FechaSolicitud,
                 FechaTrabajo = t.FechaTrabajo,
-
                 //IdEstado = t.IdEstado,
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
-
                 IdCliente = t.Cliente.Id,
                 Cliente = t.Cliente.Nombre,
-
                 IdTecnico = t.Tecnico.Id,
                 Tecnico = t.Tecnico.NombreApellido,
-
                 IdTarea = t.Tarea.Id,
                 Tarea = t.Tarea.Descripcion,
                 Comentarios = t.Comentarios,
                 TrabajoRealizado = t.TrabajoRealizado,
-
                 //Sector = t.Sector?.Nombre,
-
                 TieneFactura = !string.IsNullOrEmpty(t.Factura),
-
+                Factura = t.Factura,
                 CantidadImagenes = t.Imagenes.Count
             };
         }
@@ -165,11 +162,101 @@ namespace SistemaTecnico.Services
             await _trabajoRepository.CambiarEstadoAsync(idTrabajo, estado);
         }
 
-        public async Task GuardarTrabajoRealizado(
-            int id,
-            TrabajoRealizadoDTO dto)
+        public async Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
         {
             await _trabajoRepository.GuardarTrabajoRealizado(id, dto);
+        }
+
+        public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
+        {
+            if (archivo == null || archivo.Length == 0)
+            {
+                throw new ArgumentException(
+                    "No se recibió ningún archivo.");
+            }
+
+            var trabajo =
+                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+            {
+                throw new KeyNotFoundException(
+                    $"No existe el trabajo con ID {idTrabajo}");
+            }
+
+            // Validar extensión
+            var extension =
+                Path.GetExtension(archivo.FileName)
+                .ToLowerInvariant();
+
+            var extensionesPermitidas = new[]
+            {
+                ".pdf",
+                ".jpg",
+                ".jpeg",
+                ".png"
+            };
+
+            if (!extensionesPermitidas.Contains(extension))
+            {
+                throw new ArgumentException(
+                    "El archivo debe ser PDF, JPG, JPEG o PNG.");
+            }
+
+            // Carpeta
+            string carpeta = Path.Combine(
+                _environment.ContentRootPath,
+                "wwwroot",
+                "uploads",
+                "facturas",
+                idTrabajo.ToString()
+            );
+
+            Directory.CreateDirectory(carpeta);
+
+            // Si ya existe una factura, eliminarla
+            if (!string.IsNullOrEmpty(trabajo.Factura))
+            {
+                string rutaAnterior =
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        "wwwroot",
+                        trabajo.Factura.TrimStart('/')
+                            .Replace("/", Path.DirectorySeparatorChar.ToString())
+                    );
+
+                if (File.Exists(rutaAnterior))
+                {
+                    File.Delete(rutaAnterior);
+                }
+            }
+
+            // Nombre nuevo
+            string nombreArchivo =
+                $"factura{DateTime.Now:yyMMddHHmmss}{extension}";
+
+            string rutaFisica =
+                Path.Combine(
+                    carpeta,
+                    nombreArchivo
+                );
+
+            // Guardar archivo
+            using var stream =
+                new FileStream(
+                    rutaFisica,
+                    FileMode.Create
+                );
+
+            await archivo.CopyToAsync(stream);
+
+            // Ruta que se guarda en DB
+            trabajo.Factura =
+                $"/uploads/facturas/" +
+                $"{idTrabajo}/" +
+                $"{nombreArchivo}";
+
+            await _trabajoRepository.GuardarCambiosAsync();
         }
     }
 }
