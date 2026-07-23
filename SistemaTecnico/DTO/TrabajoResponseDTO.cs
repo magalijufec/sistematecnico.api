@@ -25,6 +25,8 @@
         public int IdTarea { get; set; }
 
         public string Tarea { get; set; }
+        public string Provincia { get; set; }
+        public string Ciudad { get; set; }
 
         public string? Comentarios { get; set; }
 

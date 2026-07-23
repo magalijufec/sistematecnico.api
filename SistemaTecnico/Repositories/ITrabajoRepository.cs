@@ -29,4 +29,5 @@ public interface ITrabajoRepository
 
     Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
     Task RegistrarPagoAsync(int idTrabajo);
+    Task SubirFacturaAsync(int idTrabajo, IFormFile archivo, IWebHostEnvironment environment);
 }

@@ -49,6 +49,8 @@ namespace SistemaTecnico.Services
                 IdTarea = t.Tarea.Id,
                 Tarea = t.Tarea.Descripcion,
                 TrabajoRealizado = t.TrabajoRealizado,
+                Provincia = t.Cliente.Provincia.Nombre,
+                Ciudad = t.Cliente.Ciudad.Nombre,
                 TieneFactura = !string.IsNullOrEmpty(t.Factura),
                 CantidadImagenes = t.Imagenes.Count
             });
@@ -173,94 +175,7 @@ namespace SistemaTecnico.Services
 
         public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
         {
-            if (archivo == null || archivo.Length == 0)
-            {
-                throw new ArgumentException(
-                    "No se recibió ningún archivo.");
-            }
-
-            var trabajo =
-                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
-
-            if (trabajo == null)
-            {
-                throw new KeyNotFoundException(
-                    $"No existe el trabajo con ID {idTrabajo}");
-            }
-
-            // Validar extensión
-            var extension =
-                Path.GetExtension(archivo.FileName)
-                .ToLowerInvariant();
-
-            var extensionesPermitidas = new[]
-            {
-                ".pdf",
-                ".jpg",
-                ".jpeg",
-                ".png"
-            };
-
-            if (!extensionesPermitidas.Contains(extension))
-            {
-                throw new ArgumentException(
-                    "El archivo debe ser PDF, JPG, JPEG o PNG.");
-            }
-
-            // Carpeta
-            string carpeta = Path.Combine(
-                _environment.ContentRootPath,
-                "wwwroot",
-                "uploads",
-                "facturas",
-                idTrabajo.ToString()
-            );
-
-            Directory.CreateDirectory(carpeta);
-
-            // Si ya existe una factura, eliminarla
-            if (!string.IsNullOrEmpty(trabajo.Factura))
-            {
-                string rutaAnterior =
-                    Path.Combine(
-                        _environment.ContentRootPath,
-                        "wwwroot",
-                        trabajo.Factura.TrimStart('/')
-                            .Replace("/", Path.DirectorySeparatorChar.ToString())
-                    );
-
-                if (File.Exists(rutaAnterior))
-                {
-                    File.Delete(rutaAnterior);
-                }
-            }
-
-            // Nombre nuevo
-            string nombreArchivo =
-                $"factura{DateTime.Now:yyMMddHHmmss}{extension}";
-
-            string rutaFisica =
-                Path.Combine(
-                    carpeta,
-                    nombreArchivo
-                );
-
-            // Guardar archivo
-            using var stream =
-                new FileStream(
-                    rutaFisica,
-                    FileMode.Create
-                );
-
-            await archivo.CopyToAsync(stream);
-
-            // Ruta que se guarda en DB
-            trabajo.Factura =
-                $"/uploads/facturas/" +
-                $"{idTrabajo}/" +
-                $"{nombreArchivo}";
-
-            await _trabajoRepository.GuardarCambiosAsync();
+            await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
         }
 
         public async Task RegistrarPagoAsync(int idTrabajo)

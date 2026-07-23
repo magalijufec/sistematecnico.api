@@ -119,9 +119,7 @@ public class TrabajoController : ControllerBase
     }
 
     [HttpPost("{id}/factura")]
-    public async Task<IActionResult> SubirFactura(
-    int id,
-    IFormFile archivo)
+    public async Task<IActionResult> SubirFactura(int id, IFormFile archivo)
     {
         try
         {
@@ -147,6 +145,7 @@ public class TrabajoController : ControllerBase
             });
         }
     }
+
 
     [HttpPut("{id}/registrar-pago")]
     public async Task<IActionResult> RegistrarPago(int id)
