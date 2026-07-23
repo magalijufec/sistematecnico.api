@@ -91,5 +91,48 @@ namespace SistemaTecnico.Services
                 Perfil = usuario.Perfil.Nombre
             };
         }
+
+        public async Task CambiarPasswordAsync(
+            int idUsuario,
+            CambiarPasswordDTO dto)
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(x => x.Id == idUsuario);
+
+            if (usuario == null)
+                throw new KeyNotFoundException(
+                    "Usuario no encontrado.");
+
+            // Verificar contraseña actual
+            bool passwordCorrecta =
+                BCrypt.Net.BCrypt.Verify(
+                    dto.PasswordActual,
+                    usuario.PasswordHash);
+
+            if (!passwordCorrecta)
+                throw new UnauthorizedAccessException(
+                    "La contraseña actual es incorrecta.");
+
+            // Verificar nueva contraseña
+            if (dto.PasswordNueva != dto.ConfirmarPassword)
+                throw new ArgumentException(
+                    "Las nuevas contraseñas no coinciden.");
+
+            // Evitar reutilizar la misma contraseña
+            if (BCrypt.Net.BCrypt.Verify(
+                dto.PasswordNueva,
+                usuario.PasswordHash))
+            {
+                throw new ArgumentException(
+                    "La nueva contraseña debe ser diferente a la actual.");
+            }
+
+            // Generar nuevo hash
+            usuario.PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(
+                    dto.PasswordNueva);
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

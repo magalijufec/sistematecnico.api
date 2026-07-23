@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Services;
 
@@ -29,6 +31,54 @@ namespace SistemaTecnico.Controllers
             }
 
             return Ok(resultado);
+        }
+
+        [Authorize]
+        [HttpPost("cambiar-password")]
+        public async Task<IActionResult> CambiarPassword(
+            [FromBody] CambiarPasswordDTO dto)
+        {
+            try
+            {
+                var idUsuarioClaim =
+                    User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(idUsuarioClaim))
+                    return Unauthorized();
+
+                if (!int.TryParse(idUsuarioClaim, out int idUsuario))
+                    return Unauthorized();
+
+                await _authService.CambiarPasswordAsync(
+                    idUsuario,
+                    dto);
+
+                return Ok(new
+                {
+                    mensaje = "Contraseña cambiada correctamente."
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new
+                {
+                    mensaje = ex.Message
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    mensaje = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    mensaje = ex.Message
+                });
+            }
         }
     }
 }
