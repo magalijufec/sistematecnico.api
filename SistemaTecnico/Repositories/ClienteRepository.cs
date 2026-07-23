@@ -16,6 +16,8 @@ namespace SistemaTecnico.Repositories
         public async Task<IEnumerable<Cliente>> ObtenerTodosAsync()
         {
             return await _context.Clientes
+                .Include(c => c.Provincia)
+                .Include(c => c.Ciudad)
                 .ToListAsync();
         }
 

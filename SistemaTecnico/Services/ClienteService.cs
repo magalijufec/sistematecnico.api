@@ -11,6 +11,23 @@ namespace SistemaTecnico.Services
         {
             _repository = repository;
         }
+
+        public async Task<IEnumerable<ClienteResponseDTO>> ObtenerTodosAsync()
+        {
+            var clientes = await _repository.ObtenerTodosAsync();
+
+            return clientes.Select(c => new ClienteResponseDTO
+            {
+                Id = c.Id,
+                NroCliente = c.NroCliente,
+                Nombre = c.Nombre,
+                Provincia = c.Provincia.Nombre,
+                Ciudad = c.Ciudad.Nombre,
+                Direccion = c.Direccion ?? string.Empty,
+                RazonSocial = c.RazonSocial ?? string.Empty
+            });
+        }
+
         public async Task<IEnumerable<ComboDTO>> ObtenerComboAsync()
         {
             var clientes = await _repository.ObtenerTodosAsync();

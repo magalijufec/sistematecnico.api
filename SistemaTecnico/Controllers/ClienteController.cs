@@ -13,6 +13,13 @@ namespace SistemaTecnico.Controllers
             _clienteService = clienteService;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var clientes = await _clienteService.ObtenerTodosAsync();
+            return Ok(clientes);
+        }
+
         [HttpGet("combo")]
         public async Task<IActionResult> ObtenerCombo()
         {
