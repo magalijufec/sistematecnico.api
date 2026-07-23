@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Services;
 
@@ -17,6 +18,7 @@ public class TrabajoController : ControllerBase
         _imagenService = imagenService;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -35,6 +37,7 @@ public class TrabajoController : ControllerBase
         return Ok(trabajo);
     }
 
+    [Authorize(Roles = "Administrador,Sistemas")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] TrabajoCreateDto dto)
     {
@@ -74,6 +77,7 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPost("{id}/imagenes")]
     public async Task<IActionResult> SubirImagenes(
         int id,
@@ -109,6 +113,7 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPut("{id}/trabajo-realizado")]
     public async Task<IActionResult> GuardarTrabajoRealizado(
     int id,
@@ -118,6 +123,7 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPost("{id}/factura")]
     public async Task<IActionResult> SubirFactura(int id, IFormFile archivo)
     {
@@ -146,7 +152,7 @@ public class TrabajoController : ControllerBase
         }
     }
 
-
+    [Authorize(Roles = "Administrador,Pagos")]
     [HttpPut("{id}/registrar-pago")]
     public async Task<IActionResult> RegistrarPago(int id)
     {

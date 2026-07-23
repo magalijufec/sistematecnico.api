@@ -1,5 +1,10 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SistemaTecnico.Data;
+using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 using SistemaTecnico.Services;
 
@@ -29,13 +34,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+        builder.Configuration.GetConnectionString("DefaultConnection"));});
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
-
 builder.Services.AddScoped<ITrabajoRepository, TrabajoRepository>();
 builder.Services.AddScoped<ITrabajoService, TrabajoService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
@@ -44,17 +46,46 @@ builder.Services.AddScoped<ITareaRepository, TareaRepository>();
 builder.Services.AddScoped<ITareaService, TareaService>();
 builder.Services.AddScoped<IEstadoRepository, EstadoRepository>();
 builder.Services.AddScoped<IImagenRepository, ImagenRepository>();
-
 builder.Services.AddScoped<IImagenService, ImagenService>();
 builder.Services.AddScoped<ITareaRepository, TareaRepository>();
-
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
-
 builder.Services.AddScoped<IDashboardService, DashboardService>();
-
 builder.Services.AddScoped<IEstadoRepository, EstadoRepository>();
-
 builder.Services.AddScoped<IEstadoService, EstadoService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+
+                ValidateAudience = true,
+
+                ValidateLifetime = true,
+
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer =
+                    builder.Configuration["Jwt:Issuer"],
+
+                ValidAudience =
+                    builder.Configuration["Jwt:Audience"],
+
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            builder.Configuration["Jwt:Key"]!
+                        )
+                    )
+            };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -70,6 +101,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseCors("Angular");
+app.UseAuthentication();
 
 app.UseAuthorization();
 
