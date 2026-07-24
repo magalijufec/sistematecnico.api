@@ -2,7 +2,7 @@
 {
     public class TrabajoUpdateDto
     {
-        public DateTime FechaTrabajo { get; set; }
+        public DateTime FechaInicio { get; set; }
 
         public int IdTecnico { get; set; }
 

@@ -30,15 +30,16 @@ namespace SistemaTecnico.Services
             _environment = environment;
         }
 
-        public async Task<IEnumerable<TrabajoResponseDto>> ObtenerTodosAsync()
+        public async Task<IEnumerable<TrabajoResponseDto>> ObtenerTrabajosNoFinalizadosAsync()
         {
             var trabajos = await _trabajoRepository.ObtenerTodosAsync();
 
-            return trabajos.Select(t => new TrabajoResponseDto
+            return trabajos.Where(t => t.Estado.Id != 4)
+                .Select(t => new TrabajoResponseDto
             {
                 Id = t.Id,
                 FechaSolicitud = t.FechaSolicitud,
-                FechaTrabajo = t.FechaTrabajo,
+                FechaInicio = t.FechaInicio,
                 IdEstado = t.Estado.Id,
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
@@ -56,6 +57,30 @@ namespace SistemaTecnico.Services
             });
         }
 
+        public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync()
+        {
+            var trabajos = await _trabajoRepository.ObtenerTodosAsync();
+
+            return trabajos.Where(t => t.Estado.Id == 4)
+                .Select(t => new TrabajoFinalizadoDTO
+                {
+                    Id = t.Id,
+                    FechaSolicitud = t.FechaSolicitud,
+                    FechaInicio = t.FechaInicio,
+                    FechaFinalizado = t.FechaFinalizado,
+                    FechaPagado = t.FechaPagado,
+                    IdCliente = t.Cliente.Id,
+                    Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
+                    IdTecnico = t.Tecnico.Id,
+                    Tecnico = t.Tecnico.NombreApellido,
+                    IdTarea = t.Tarea.Id,
+                    Tarea = t.Tarea.Descripcion,
+                    TrabajoRealizado = t.TrabajoRealizado,
+                    Provincia = t.Cliente.Provincia.Nombre,
+                    Ciudad = t.Cliente.Ciudad.Nombre
+                });
+        }
+
         public async Task<TrabajoResponseDto?> ObtenerPorIdAsync(int id)
         {
             var t = await _trabajoRepository.ObtenerPorIdAsync(id);
@@ -67,7 +92,7 @@ namespace SistemaTecnico.Services
             {
                 Id = t.Id,
                 FechaSolicitud = t.FechaSolicitud,
-                FechaTrabajo = t.FechaTrabajo,
+                FechaInicio = t.FechaInicio,
                 //IdEstado = t.IdEstado,
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
@@ -98,8 +123,6 @@ namespace SistemaTecnico.Services
             {
                 FechaSolicitud = DateTime.Now,
 
-                FechaTrabajo = dto.FechaTrabajo,
-
                 Tecnico = await _usuarioRepository.ObtenerPorIdAsync(dto.IdTecnico),
 
                 Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente),
@@ -128,7 +151,7 @@ namespace SistemaTecnico.Services
             if (trabajo == null)
                 return false;
 
-            trabajo.FechaTrabajo = dto.FechaTrabajo;
+            trabajo.FechaInicio = dto.FechaInicio;
 
             trabajo.Tecnico = await _usuarioRepository.ObtenerPorIdAsync(dto.IdTecnico);
 

@@ -18,11 +18,21 @@ public class TrabajoController : ControllerBase
         _imagenService = imagenService;
     }
 
-    [Authorize]
-    [HttpGet]
-    public async Task<IActionResult> Get()
+    [HttpGet("no-finalizados")]
+    public async Task<IActionResult> GetNoFinalizados()
     {
-        var trabajos = await _trabajoService.ObtenerTodosAsync();
+        var trabajos =
+            await _trabajoService.ObtenerTrabajosNoFinalizadosAsync();
+
+        return Ok(trabajos);
+    }
+
+    [HttpGet("finalizados")]
+    public async Task<IActionResult> GetFinalizados()
+    {
+        var trabajos =
+            await _trabajoService.ObtenerTrabajosFinalizadosAsync();
+
         return Ok(trabajos);
     }
 

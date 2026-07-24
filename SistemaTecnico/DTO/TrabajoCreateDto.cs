@@ -8,8 +8,6 @@
 
         public int IdTarea { get; set; }
 
-        public DateTime FechaTrabajo { get; set; }
-
         public string? Comentarios { get; set; }
     }
 }

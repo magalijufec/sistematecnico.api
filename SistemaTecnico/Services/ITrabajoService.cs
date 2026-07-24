@@ -4,7 +4,8 @@ namespace SistemaTecnico.Services
 {
     public interface ITrabajoService
     {
-        Task<IEnumerable<TrabajoResponseDto>> ObtenerTodosAsync();
+        Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync();
+        Task<IEnumerable<TrabajoResponseDto>> ObtenerTrabajosNoFinalizadosAsync();
 
         Task<TrabajoResponseDto?> ObtenerPorIdAsync(int id);
 
