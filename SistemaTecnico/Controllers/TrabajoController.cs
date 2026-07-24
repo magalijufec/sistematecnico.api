@@ -31,7 +31,7 @@ public class TrabajoController : ControllerBase
     public async Task<IActionResult> GetPendientesPago()
     {
         var trabajos =
-            await _trabajoService.ObtenerTrabajosNoFinalizadosAsync();
+            await _trabajoService.ObtenerTrabajosPendientesPagoAsync();
 
         return Ok(trabajos);
     }
