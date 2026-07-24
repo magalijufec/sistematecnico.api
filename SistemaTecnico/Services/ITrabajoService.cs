@@ -6,6 +6,7 @@ namespace SistemaTecnico.Services
     {
         Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync();
         Task<IEnumerable<TrabajoResponseDto>> ObtenerTrabajosNoFinalizadosAsync();
+        Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPendientesPagoAsync();
 
         Task<TrabajoResponseDto?> ObtenerPorIdAsync(int id);
 

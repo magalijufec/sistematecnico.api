@@ -27,6 +27,15 @@ public class TrabajoController : ControllerBase
         return Ok(trabajos);
     }
 
+    [HttpGet("pendiente-pago")]
+    public async Task<IActionResult> GetPendientesPago()
+    {
+        var trabajos =
+            await _trabajoService.ObtenerTrabajosNoFinalizadosAsync();
+
+        return Ok(trabajos);
+    }
+
     [HttpGet("finalizados")]
     public async Task<IActionResult> GetFinalizados()
     {

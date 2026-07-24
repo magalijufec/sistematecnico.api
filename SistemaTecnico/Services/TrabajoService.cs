@@ -57,6 +57,30 @@ namespace SistemaTecnico.Services
             });
         }
 
+        public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPendientesPagoAsync()
+        {
+            var trabajos = await _trabajoRepository.ObtenerTodosAsync();
+
+            return trabajos.Where(t => t.Estado.Id == 3)
+                .Select(t => new TrabajoFinalizadoDTO
+                {
+                    Id = t.Id,
+                    FechaSolicitud = t.FechaSolicitud,
+                    FechaInicio = t.FechaInicio,
+                    FechaFinalizado = t.FechaFinalizado,
+                    FechaPagado = t.FechaPagado,
+                    IdCliente = t.Cliente.Id,
+                    Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
+                    IdTecnico = t.Tecnico.Id,
+                    Tecnico = t.Tecnico.NombreApellido,
+                    IdTarea = t.Tarea.Id,
+                    Tarea = t.Tarea.Descripcion,
+                    TrabajoRealizado = t.TrabajoRealizado,
+                    Provincia = t.Cliente.Provincia.Nombre,
+                    Ciudad = t.Cliente.Ciudad.Nombre
+                });
+        }
+
         public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync()
         {
             var trabajos = await _trabajoRepository.ObtenerTodosAsync();
