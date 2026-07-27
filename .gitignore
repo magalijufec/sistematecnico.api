@@ -53,6 +53,9 @@ Desktop.ini
 # Resultados de pruebas
 TestResults
 
+# carpeta de imagenes
+wwwroot/
+
 # Cobertura de código
 coverage
 .coverage
