@@ -8,9 +8,7 @@ namespace SistemaTecnico.Services
     public class ImagenService : IImagenService
     {
         private readonly IWebHostEnvironment _environment;
-
         private readonly IImagenRepository _imagenRepository;
-
         private readonly ITrabajoRepository _trabajoRepository;
 
         public ImagenService(
@@ -25,8 +23,7 @@ namespace SistemaTecnico.Services
 
         public async Task<List<ImagenResponseDto>> ObtenerImagenesAsync(int idTrabajo)
         {
-            var imagenes =
-                await _imagenRepository.ObtenerPorTrabajoAsync(idTrabajo);
+            var imagenes = await _imagenRepository.ObtenerPorTrabajoAsync(idTrabajo);
 
             return imagenes.Select(i => new ImagenResponseDto
             {
@@ -46,9 +43,9 @@ namespace SistemaTecnico.Services
         }
 
         public async Task SubirImagenes(
-       int idTrabajo,
-       bool antes,
-       List<IFormFile> archivos)
+           int idTrabajo,
+           bool antes,
+           List<IFormFile> archivos)
         {
             if (archivos == null || archivos.Count == 0)
                 throw new ArgumentException("No se recibieron archivos.");
@@ -79,11 +76,8 @@ namespace SistemaTecnico.Services
                 if (archivo == null || archivo.Length == 0)
                     continue;
 
-                string extension =
-                    Path.GetExtension(archivo.FileName);
-
-                string nombreArchivo =
-                    $"{Guid.NewGuid()}{extension}";
+                string extension = Path.GetExtension(archivo.FileName);
+                string nombreArchivo = $"{DateTime.Now:yyMMdd_HHmmss}{extension}";
 
                 string rutaFisica =
                     Path.Combine(
@@ -102,25 +96,11 @@ namespace SistemaTecnico.Services
                 var imagen = new Imagen
                 {
                     TrabajoId = idTrabajo,
-                    //Trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo),
-
-                    EsAntes = antes,
-
-                    NombreArchivo =
-                        archivo.FileName,
-
-                    Extension =
-                        extension,
-
-                    Tipo =
-                        archivo.ContentType,
-
-                    Tamanio =
-                        archivo.Length,
-
-                    FechaCarga =
-                        DateTime.Now,
-
+                    NombreArchivo = archivo.FileName,
+                    Extension = extension,
+                    Tipo = archivo.ContentType,
+                    Tamanio = archivo.Length,
+                    FechaCarga = DateTime.Now,
                     RutaArchivo =
                         $"/uploads/trabajos/" +
                         $"{idTrabajo}/" +
@@ -134,34 +114,9 @@ namespace SistemaTecnico.Services
             await _imagenRepository.GuardarCambiosAsync();
         }
 
-        //public async Task<bool> EliminarImagenAsync(int idImagen)
-        //{
-        //    var imagen =
-        //        await _imagenRepository.ObtenerPorIdAsync(idImagen);
-
-        //    if (imagen == null)
-        //        return false;
-
-        //    string rutaFisica =
-        //        Path.Combine(
-        //            _environment.WebRootPath,
-        //            imagen.RutaArchivo);
-
-        //    if (File.Exists(rutaFisica))
-        //        File.Delete(rutaFisica);
-
-        //    await _imagenRepository.EliminarAsync(imagen);
-
-        //    await _imagenRepository.GuardarCambiosAsync();
-
-        //    return true;
-        //}
-
-
         public async Task EliminarImagenAsync(int idImagen)
         {
             await _imagenRepository.EliminarImagenAsync(idImagen);
-
             await _imagenRepository.GuardarCambiosAsync();
         }
     }

@@ -98,13 +98,9 @@ public class TrabajoController : ControllerBase
 
     [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPost("{id}/imagenes")]
-    public async Task<IActionResult> SubirImagenes(
-        int id,
-        [FromForm] bool antes,
-        [FromForm] List<IFormFile> archivos)
+    public async Task<IActionResult> SubirImagenes(int id, [FromForm] bool antes, [FromForm] List<IFormFile> archivos)
     {
         await _imagenService.SubirImagenes(id, antes, archivos);
-
         return Ok();
     }
 
@@ -123,9 +119,7 @@ public class TrabajoController : ControllerBase
     }
 
     [HttpPut("{id}/estado")]
-    public async Task<IActionResult> CambiarEstado(
-        int id,
-        CambiarEstadoDTO dto)
+    public async Task<IActionResult> CambiarEstado(int id, CambiarEstadoDTO dto)
     {
         await _trabajoService.CambiarEstadoAsync(id, dto);
 
@@ -134,9 +128,7 @@ public class TrabajoController : ControllerBase
 
     [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPut("{id}/trabajo-realizado")]
-    public async Task<IActionResult> GuardarTrabajoRealizado(
-    int id,
-    TrabajoRealizadoDTO dto)
+    public async Task<IActionResult> GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
     {
         await _trabajoService.GuardarTrabajoRealizado(id, dto);
         return NoContent();

@@ -17,6 +17,7 @@
         public string? Factura { get; set; }
         public DateTime? FechaPagado { get; set; }
         public IList<Imagen> Imagenes { get; set; } = new List<Imagen>();
-        //public ICollection<HistorialEstado> HistorialEstados { get; set; } = new List<HistorialEstado>();
+        public ICollection<TrabajoImagenComparacion> ComparacionesImagenes { get; set; }
+            = new List<TrabajoImagenComparacion>();
     }
 }

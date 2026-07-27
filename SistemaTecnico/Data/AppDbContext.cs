@@ -30,8 +30,7 @@ namespace SistemaTecnico.Data
         public DbSet<Imagen> Imagenes => Set<Imagen>();
 
         public DbSet<EstadoTrabajo> EstadosTrabajo => Set<EstadoTrabajo>();
-
-        //public DbSet<HistorialEstado> HistorialEstados => Set<HistorialEstado>();
+        public DbSet<TrabajoImagenComparacion> TrabajoImagenComparaciones => Set<TrabajoImagenComparacion>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +43,24 @@ namespace SistemaTecnico.Data
                 .HasOne(c => c.Ciudad)
                 .WithMany()
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<TrabajoImagenComparacion>()
+                .HasOne(x => x.Trabajo)
+                .WithMany(x => x.ComparacionesImagenes)
+                .HasForeignKey(x => x.TrabajoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TrabajoImagenComparacion>()
+                .HasOne(x => x.ImagenAntes)
+                .WithMany()
+                .HasForeignKey(x => x.ImagenAntesId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TrabajoImagenComparacion>()
+                .HasOne(x => x.ImagenDespues)
+                .WithMany()
+                .HasForeignKey(x => x.ImagenDespuesId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
