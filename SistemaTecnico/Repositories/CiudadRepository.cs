@@ -1,4 +1,5 @@
-﻿using SistemaTecnico.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using SistemaTecnico.Data;
 using SistemaTecnico.Models;
 
 namespace SistemaTecnico.Repositories
@@ -15,6 +16,7 @@ namespace SistemaTecnico.Repositories
         public async Task<IEnumerable<Ciudad>> ObtenerTodasAsync()
         {
             return _context.Ciudades
+                .Include( x => x.Provincia)
                 .OrderBy(x => x.Nombre)
                 .ToList();
         }

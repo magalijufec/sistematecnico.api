@@ -52,7 +52,8 @@ namespace SistemaTecnico.Repositories
                 Activo = true,
                 Perfil = await _context.Perfiles.FindAsync(usuario.IdPerfil),
                 Provincia = usuario.IdProvincia.HasValue ? await _context.Provincias.FindAsync(usuario.IdProvincia.Value) : null,
-                Ciudad = usuario.IdCiudad.HasValue ? await _context.Ciudades.FindAsync(usuario.IdCiudad.Value) : null
+                Ciudad = usuario.IdCiudad.HasValue ? await _context.Ciudades.FindAsync(usuario.IdCiudad.Value) : null,
+                Cliente = usuario.ClienteId.HasValue ? await _context.Clientes.FindAsync(usuario.ClienteId.Value) : null
             };
             await _context.Usuarios.AddAsync(user);
         }

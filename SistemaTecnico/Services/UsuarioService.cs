@@ -25,8 +25,8 @@ namespace SistemaTecnico.Services
                     UserName = x.UserName,
                     Email = x.Email,
                     Perfil = x.Perfil.Nombre,
-                    Provincia = x.Provincia.Nombre,
-                    Ciudad = x.Ciudad.Nombre,
+                    Provincia = x.Provincia?.Nombre,
+                    Ciudad = x.Ciudad?.Nombre,
                     Activo = x.Activo
                 });
         }
