@@ -28,6 +28,7 @@ namespace SistemaTecnico.Services
         {
             var usuario = await _context.Usuarios
                 .Include(x => x.Perfil)
+                .Include(x => x.Cliente)
                 .FirstOrDefaultAsync(x =>
                     x.UserName == dto.UserName &&
                     x.Activo);
@@ -88,7 +89,8 @@ namespace SistemaTecnico.Services
                 UserName = usuario.UserName,
                 NombreApellido = usuario.NombreApellido,
                 IdPerfil = usuario.Perfil.Id,
-                Perfil = usuario.Perfil.Nombre
+                Perfil = usuario.Perfil.Nombre,
+                ClienteId = usuario.Cliente?.Id
             };
         }
 

@@ -22,8 +22,6 @@ namespace SistemaTecnico.Models
 
         public Ciudad? Ciudad { get; set; }
 
-        //public IList<Trabajo> Trabajos { get; set; } = new List<Trabajo>();
-
-        //ublic ICollection<HistorialEstado> HistorialEstados { get; set; } = new List<HistorialEstado>();
+        public Cliente? Cliente { get; set; }
     }
 }
