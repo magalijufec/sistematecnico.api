@@ -36,25 +36,25 @@ namespace SistemaTecnico.Services
 
             return trabajos.Where(t => t.Estado.Id != 4)
                 .Select(t => new TrabajoResponseDto
-            {
-                Id = t.Id,
-                FechaSolicitud = t.FechaSolicitud,
-                FechaInicio = t.FechaInicio,
-                IdEstado = t.Estado.Id,
-                Estado = t.Estado.Nombre,
-                EstadoColor = t.Estado.Color,
-                IdCliente = t.Cliente.Id,
-                Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
-                IdTecnico = t.Tecnico.Id,
-                Tecnico = t.Tecnico.NombreApellido,
-                IdTarea = t.Tarea.Id,
-                Tarea = t.Tarea.Descripcion,
-                TrabajoRealizado = t.TrabajoRealizado,
-                Provincia = t.Cliente.Provincia.Nombre,
-                Ciudad = t.Cliente.Ciudad.Nombre,
-                TieneFactura = !string.IsNullOrEmpty(t.Factura),
-                CantidadImagenes = t.Imagenes.Count
-            });
+                {
+                    Id = t.Id,
+                    FechaSolicitud = t.FechaSolicitud,
+                    FechaInicio = t.FechaInicio,
+                    IdEstado = t.Estado.Id,
+                    Estado = t.Estado.Nombre,
+                    EstadoColor = t.Estado.Color,
+                    IdCliente = t.Cliente.Id,
+                    Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
+                    IdTecnico = t.Tecnico.Id,
+                    Tecnico = t.Tecnico.NombreApellido,
+                    IdTarea = t.Tarea.Id,
+                    Tarea = t.Tarea.Descripcion,
+                    TrabajoRealizado = t.TrabajoRealizado,
+                    Provincia = t.Cliente.Provincia.Nombre,
+                    Ciudad = t.Cliente.Ciudad.Nombre,
+                    TieneFactura = !string.IsNullOrEmpty(t.Factura),
+                    CantidadImagenes = t.Imagenes.Count
+                }).OrderByDescending(t => t.FechaSolicitud);
         }
 
         public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPendientesPagoAsync()
@@ -78,7 +78,7 @@ namespace SistemaTecnico.Services
                     TrabajoRealizado = t.TrabajoRealizado,
                     Provincia = t.Cliente.Provincia.Nombre,
                     Ciudad = t.Cliente.Ciudad.Nombre
-                });
+                }).OrderByDescending(t => t.FechaFinalizado);
         }
 
         public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync()
@@ -102,7 +102,7 @@ namespace SistemaTecnico.Services
                     TrabajoRealizado = t.TrabajoRealizado,
                     Provincia = t.Cliente.Provincia.Nombre,
                     Ciudad = t.Cliente.Ciudad.Nombre
-                });
+                }).OrderByDescending(t => t.FechaFinalizado);
         }
 
         public async Task<TrabajoResponseDto?> ObtenerPorIdAsync(int id)
@@ -117,7 +117,6 @@ namespace SistemaTecnico.Services
                 Id = t.Id,
                 FechaSolicitud = t.FechaSolicitud,
                 FechaInicio = t.FechaInicio,
-                //IdEstado = t.IdEstado,
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
                 IdCliente = t.Cliente.Id,
@@ -128,7 +127,6 @@ namespace SistemaTecnico.Services
                 Tarea = t.Tarea.Descripcion,
                 Comentarios = t.Comentarios,
                 TrabajoRealizado = t.TrabajoRealizado,
-                //Sector = t.Sector?.Nombre,
                 TieneFactura = !string.IsNullOrEmpty(t.Factura),
                 Factura = t.Factura,
                 CantidadImagenes = t.Imagenes.Count
@@ -146,24 +144,15 @@ namespace SistemaTecnico.Services
             var trabajo = new Trabajo
             {
                 FechaSolicitud = DateTime.Now,
-
                 Tecnico = await _usuarioRepository.ObtenerPorIdAsync(dto.IdTecnico),
-
                 Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente),
-
-                //IdSector = dto.IdSector,
-
                 Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea),
-
                 Comentarios = dto.Comentarios,
-
                 Estado = await _estadoRepository.ObtenerPorIdAsync(1)
             };
 
             await _trabajoRepository.AgregarAsync(trabajo);
-
             await _trabajoRepository.GuardarCambiosAsync();
-
             return await ObtenerPorIdAsync(trabajo.Id)
                    ?? throw new Exception("Error al recuperar el trabajo creado.");
         }
