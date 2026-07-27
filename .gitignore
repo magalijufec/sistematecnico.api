@@ -54,7 +54,7 @@ Desktop.ini
 TestResults
 
 # carpeta de imagenes
-wwwroot/
+wwwroot/uploads/
 
 # Cobertura de código
 coverage
