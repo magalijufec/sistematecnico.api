@@ -46,7 +46,7 @@ namespace SistemaTecnico.Repositories
             {
                 NombreApellido = usuario.NombreApellido,
                 UserName = usuario.UserName,
-                PasswordHash = usuario.PasswordHash,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(usuario.Password),
                 Email = usuario.Email,
                 NumeroCelular = usuario.NumeroCelular,
                 Activo = true,

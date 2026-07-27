@@ -26,5 +26,20 @@ namespace SistemaTecnico.Controllers
             var clientes = await _clienteService.ObtenerComboAsync();
             return Ok(clientes);
         }
+
+        [HttpGet("provincia/{provinciaId}/ciudad/{ciudadId}")]
+        public async Task<IActionResult> ObtenerPorProvinciaCiudad(
+        int provinciaId,
+        int ciudadId)
+        {
+            var clientes =
+                await _clienteService
+                    .ObtenerPorProvinciaCiudadAsync(
+                        provinciaId,
+                        ciudadId
+                    );
+
+            return Ok(clientes);
+        }
     }
 }

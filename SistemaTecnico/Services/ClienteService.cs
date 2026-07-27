@@ -40,5 +40,23 @@ namespace SistemaTecnico.Services
                     Nombre = x.NroCliente + " "+ x.Nombre
                 });
         }
+
+        public async Task<IEnumerable<ComboDTO>> ObtenerPorProvinciaCiudadAsync(
+            int provinciaId,
+            int ciudadId)
+        {
+            var clientes =
+                await _repository
+                    .ObtenerPorProvinciaCiudadAsync(
+                        provinciaId,
+                        ciudadId
+                    );
+
+            return clientes.Select(x => new ComboDTO
+            {
+                Id = x.Id,
+                Nombre = x.Nombre
+            });
+        }
     }
 }

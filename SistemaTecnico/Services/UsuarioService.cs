@@ -51,13 +51,8 @@ namespace SistemaTecnico.Services
 
         public async Task CrearAsync(UsuarioDTO usuario)
         {
-            usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(usuario.PasswordHash);
-
             await _repository.AgregarAsync(usuario);
-
             await _repository.GuardarCambiosAsync();
-
-            //return usuario;
         }
 
         public async Task<bool> ActualizarAsync(int id, UsuarioDTO usuario)
