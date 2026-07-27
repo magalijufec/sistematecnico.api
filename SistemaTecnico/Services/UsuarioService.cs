@@ -31,20 +31,21 @@ namespace SistemaTecnico.Services
                 });
         }
 
-        public async Task<UsuarioResponseDTO?> ObtenerPorIdAsync(int id)
+        public async Task<UsuarioDetalleDTO?> ObtenerPorIdAsync(int id)
         {
             var user = await _repository.ObtenerPorIdAsync(id);
             if (user == null) return null;
 
-            return new UsuarioResponseDTO
+            return new UsuarioDetalleDTO
             {
                 Id = user.Id,
                 NombreApellido = user.NombreApellido,
                 UserName = user.UserName,
                 Email = user.Email,
-                Perfil = user.Perfil.Nombre,
-                Provincia = user.Provincia.Nombre,
-                Ciudad = user.Ciudad.Nombre,
+                PerfilId = user.Perfil.Id,
+                ProvinciaId = user.Provincia.Id,
+                CiudadId = user.Ciudad.Id,
+                ClienteId = user.Cliente != null ? user.Cliente.Id : null,
                 Activo = user.Activo
             };
         }
