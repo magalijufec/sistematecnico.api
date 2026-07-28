@@ -144,7 +144,7 @@ namespace SistemaTecnico.Services
             var trabajo = new Trabajo
             {
                 FechaSolicitud = DateTime.Now,
-                Tecnico = await _usuarioRepository.ObtenerPorIdAsync(dto.IdTecnico),
+                Tecnico = await _usuarioRepository.ObtenerPorIdActivoAsync(dto.IdTecnico),
                 Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente),
                 Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea),
                 Comentarios = dto.Comentarios,
@@ -166,7 +166,7 @@ namespace SistemaTecnico.Services
 
             trabajo.FechaInicio = dto.FechaInicio;
 
-            trabajo.Tecnico = await _usuarioRepository.ObtenerPorIdAsync(dto.IdTecnico);
+            trabajo.Tecnico = await _usuarioRepository.ObtenerPorIdActivoAsync(dto.IdTecnico);
 
             trabajo.Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente);
 

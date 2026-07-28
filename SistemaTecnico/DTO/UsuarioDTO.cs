@@ -11,12 +11,8 @@ namespace SistemaTecnico.DTO
         public string? NumeroCelular { get; set; }
         public bool Activo { get; set; }
         public int IdPerfil { get; set; }
-
-        //public int? IdSector { get; set; }
-
-        //public Sector? Sector { get; set; }
         public int? IdProvincia { get; set; }
         public int? IdCiudad { get; set; }
-        public int? ClienteId { get; set; }
+        public int? IdCliente { get; set; }
     }
 }

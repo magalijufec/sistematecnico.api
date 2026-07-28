@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
@@ -8,10 +9,19 @@ namespace SistemaTecnico.Services
     public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioRepository _repository;
+        private readonly IPerfilRepository _perfilRepository;
+        private readonly IProvinciaRepository _provinciaRepository;
+        private readonly ICiudadRepository _ciudadRepository;
+        private readonly IClienteRepository _clienteRepository;
 
-        public UsuarioService(IUsuarioRepository repository)
+        public UsuarioService(IUsuarioRepository repository, IPerfilRepository perfilRepository, IProvinciaRepository provinciaRepository,
+            ICiudadRepository ciudadRepository, IClienteRepository clienteRepository)
         {
             _repository = repository;
+            _perfilRepository = perfilRepository;
+            _provinciaRepository = provinciaRepository;
+            _ciudadRepository = ciudadRepository;
+            _clienteRepository = clienteRepository;
         }
 
         public async Task<IEnumerable<UsuarioResponseDTO>> ObtenerTodosAsync()
@@ -50,6 +60,25 @@ namespace SistemaTecnico.Services
             };
         }
 
+        public async Task<UsuarioDetalleDTO?> ObtenerPorIdActivoAsync(int id)
+        {
+            var user = await _repository.ObtenerPorIdActivoAsync(id);
+            if (user == null) return null;
+
+            return new UsuarioDetalleDTO
+            {
+                Id = user.Id,
+                NombreApellido = user.NombreApellido,
+                UserName = user.UserName,
+                Email = user.Email,
+                PerfilId = user.Perfil.Id,
+                ProvinciaId = user.Provincia.Id,
+                CiudadId = user.Ciudad.Id,
+                ClienteId = user.Cliente != null ? user.Cliente.Id : null,
+                Activo = user.Activo
+            };
+        }
+
         public async Task CrearAsync(UsuarioDTO usuario)
         {
             await _repository.AgregarAsync(usuario);
@@ -58,10 +87,24 @@ namespace SistemaTecnico.Services
 
         public async Task<bool> ActualizarAsync(int id, UsuarioDTO usuario)
         {
-            var existente = await _repository.ObtenerPorIdAsync(id);
+            var existente = await _repository.ObtenerPorIdActivoAsync(id);
 
             if (existente == null)
                 return false;
+
+            existente.UserName = usuario.UserName;
+            existente.NombreApellido = usuario.NombreApellido;
+            existente.NumeroCelular = usuario.NumeroCelular;
+            existente.Email = usuario.Email;
+            existente.Activo = usuario.Activo;
+            if (usuario.IdPerfil != null)
+                existente.Perfil = await _perfilRepository.ObtenerPorIdAsync(usuario.IdPerfil);
+            if (usuario.IdProvincia != null)
+                existente.Provincia = await _provinciaRepository.ObtenerPorIdAsync(usuario.IdProvincia.Value);
+            if (usuario.IdCiudad != null)
+                existente.Ciudad = await _ciudadRepository.ObtenerPorIdAsync(usuario.IdCiudad.Value);
+            if (usuario.IdCliente != null)
+                existente.Cliente = await _clienteRepository.ObtenerPorIdAsync(usuario.IdCliente.Value);
 
             await _repository.ActualizarAsync(existente);
 
@@ -72,7 +115,7 @@ namespace SistemaTecnico.Services
 
         public async Task<bool> EliminarAsync(int id)
         {
-            var usuario = await _repository.ObtenerPorIdAsync(id);
+            var usuario = await _repository.ObtenerPorIdActivoAsync(id);
 
             if (usuario == null)
                 return false;

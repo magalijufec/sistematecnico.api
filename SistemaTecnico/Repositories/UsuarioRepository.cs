@@ -24,14 +24,22 @@ namespace SistemaTecnico.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Usuario?> ObtenerPorIdActivoAsync(int id)
+        {
+            return await _context.Usuarios
+                .Include(x => x.Perfil)
+                .Include(x => x.Provincia)
+                .Include(x => x.Ciudad)
+                .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
+        }
+
         public async Task<Usuario?> ObtenerPorIdAsync(int id)
         {
             return await _context.Usuarios
                 .Include(x => x.Perfil)
                 .Include(x => x.Provincia)
                 .Include(x => x.Ciudad)
-                //.Include(x => x.Sector)
-                .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<Usuario?> ObtenerPorUsuarioAsync(string userName)
@@ -53,7 +61,7 @@ namespace SistemaTecnico.Repositories
                 Perfil = await _context.Perfiles.FindAsync(usuario.IdPerfil),
                 Provincia = usuario.IdProvincia.HasValue ? await _context.Provincias.FindAsync(usuario.IdProvincia.Value) : null,
                 Ciudad = usuario.IdCiudad.HasValue ? await _context.Ciudades.FindAsync(usuario.IdCiudad.Value) : null,
-                Cliente = usuario.ClienteId.HasValue ? await _context.Clientes.FindAsync(usuario.ClienteId.Value) : null
+                Cliente = usuario.IdCliente.HasValue ? await _context.Clientes.FindAsync(usuario.IdCliente.Value) : null
             };
             await _context.Usuarios.AddAsync(user);
         }

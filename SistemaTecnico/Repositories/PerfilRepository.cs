@@ -17,5 +17,11 @@ namespace SistemaTecnico.Repositories
         {
             return await _context.Perfiles.ToListAsync();
         }
+
+        public async Task<Perfil?> ObtenerPorIdAsync(int id)
+        {
+            return _context.Perfiles
+                .FirstOrDefault(x => x.Id == id);
+        }
     }
 }

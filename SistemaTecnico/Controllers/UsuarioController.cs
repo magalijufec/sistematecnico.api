@@ -27,6 +27,17 @@ namespace SistemaTecnico.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
+            var usuario = await _service.ObtenerPorIdActivoAsync(id);
+
+            if (usuario == null)
+                return NotFound();
+
+            return Ok(usuario);
+        }
+
+        [HttpGet("{id}/usuarioinactivoyactivo")]
+        public async Task<IActionResult> GetInactivosYActivo(int id)
+        {
             var usuario = await _service.ObtenerPorIdAsync(id);
 
             if (usuario == null)

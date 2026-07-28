@@ -8,6 +8,7 @@ namespace SistemaTecnico.Services
         Task<IEnumerable<UsuarioResponseDTO>> ObtenerTodosAsync();
 
         Task<UsuarioDetalleDTO> ObtenerPorIdAsync(int id);
+        Task<UsuarioDetalleDTO> ObtenerPorIdActivoAsync(int id);
 
         Task CrearAsync(UsuarioDTO usuario);
 

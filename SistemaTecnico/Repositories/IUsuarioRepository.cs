@@ -9,6 +9,8 @@ namespace SistemaTecnico.Repositories
 
         Task<Usuario?> ObtenerPorIdAsync(int id);
 
+        Task<Usuario?> ObtenerPorIdActivoAsync(int id);
+
         Task<Usuario?> ObtenerPorUsuarioAsync(string userName);
 
         Task AgregarAsync(UsuarioDTO  usuario);
