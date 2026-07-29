@@ -20,6 +20,7 @@ namespace SistemaTecnico.Repositories
                 .Include(x => x.Perfil)
                 .Include(x => x.Provincia)
                 .Include(x => x.Ciudad)
+                .Include(x => x.Cliente)
                 //.Include(x => x.Sector)
                 .ToListAsync();
         }
@@ -30,6 +31,7 @@ namespace SistemaTecnico.Repositories
                 .Include(x => x.Perfil)
                 .Include(x => x.Provincia)
                 .Include(x => x.Ciudad)
+                .Include(x => x.Cliente)
                 .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
         }
 
@@ -39,6 +41,7 @@ namespace SistemaTecnico.Repositories
                 .Include(x => x.Perfil)
                 .Include(x => x.Provincia)
                 .Include(x => x.Ciudad)
+                .Include(x => x.Cliente)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 

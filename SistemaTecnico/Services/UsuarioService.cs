@@ -35,9 +35,15 @@ namespace SistemaTecnico.Services
                     UserName = x.UserName,
                     Email = x.Email,
                     Perfil = x.Perfil.Nombre,
+                    PerfilId = x.Perfil.Id,
                     Provincia = x.Provincia?.Nombre,
+                    ProvinciaId = x.Provincia.Id,
                     Ciudad = x.Ciudad?.Nombre,
-                    Activo = x.Activo
+                    CiudadId = x.Ciudad.Id,
+                    Activo = x.Activo,
+                    Cliente = x.Cliente != null ? $"{x.Cliente.NroCliente} - {x.Cliente.Nombre}" : " - ",
+                    ClienteId = x.Cliente?.Id
+
                 });
         }
 

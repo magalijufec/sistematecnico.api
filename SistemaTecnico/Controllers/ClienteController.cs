@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaTecnico.Services;
 
 namespace SistemaTecnico.Controllers
@@ -13,6 +14,7 @@ namespace SistemaTecnico.Controllers
             _clienteService = clienteService;
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpGet]
         public async Task<IActionResult> Get()
         {
