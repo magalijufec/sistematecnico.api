@@ -7,7 +7,11 @@ public interface ITrabajoRepository
 {
     Task<IEnumerable<Trabajo>> ObtenerTodosAsync();
 
-    Task<Trabajo?> ObtenerPorIdAsync(int id);
+    Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(
+        int idCliente);
+
+    Task<Trabajo?> ObtenerPorIdAsync(
+        int id);
 
     Task AgregarAsync(Trabajo trabajo);
 
