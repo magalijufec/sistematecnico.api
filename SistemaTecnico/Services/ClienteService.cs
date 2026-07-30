@@ -28,20 +28,22 @@ namespace SistemaTecnico.Services
             });
         }
 
-        public async Task<IEnumerable<ComboDTO>> ObtenerComboAsync()
+        public async Task<IEnumerable<ClienteComboDto>> ObtenerComboAsync()
         {
             var clientes = await _repository.ObtenerTodosAsync();
 
             return clientes
                 .OrderBy(x => x.Nombre)
-                .Select(x => new ComboDTO
+                .Select(x => new ClienteComboDto
                 {
                     Id = x.Id,
-                    Nombre = x.NroCliente + " "+ x.Nombre
+                    Nombre = x.NroCliente + " "+ x.Nombre,
+                    ProvinciaId = x.ProvinciaId,
+                    CiudadId = x.CiudadId
                 });
         }
 
-        public async Task<IEnumerable<ComboDTO>> ObtenerPorProvinciaCiudadAsync(
+        public async Task<IEnumerable<ClienteComboDto>> ObtenerPorProvinciaCiudadAsync(
             int provinciaId,
             int ciudadId)
         {
@@ -52,10 +54,12 @@ namespace SistemaTecnico.Services
                         ciudadId
                     );
 
-            return clientes.Select(x => new ComboDTO
+            return clientes.Select(x => new ClienteComboDto
             {
                 Id = x.Id,
-                Nombre = x.Nombre
+                Nombre = x.Nombre,
+                ProvinciaId = x.ProvinciaId,
+                CiudadId = x.CiudadId
             });
         }
     }

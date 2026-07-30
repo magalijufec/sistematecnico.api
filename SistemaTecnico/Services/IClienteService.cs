@@ -5,9 +5,9 @@ namespace SistemaTecnico.Services
     public interface IClienteService
     {
         Task<IEnumerable<ClienteResponseDTO>> ObtenerTodosAsync();
-        Task<IEnumerable<ComboDTO>> ObtenerComboAsync();
+        Task<IEnumerable<ClienteComboDto>> ObtenerComboAsync();
 
-        Task<IEnumerable<ComboDTO>> ObtenerPorProvinciaCiudadAsync(
+        Task<IEnumerable<ClienteComboDto>> ObtenerPorProvinciaCiudadAsync(
             int provinciaId,
             int ciudadId
         );

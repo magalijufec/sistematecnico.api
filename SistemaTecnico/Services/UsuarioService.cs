@@ -133,14 +133,15 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task<IEnumerable<ComboDTO>> ObtenerTecnicosAsync()
+        public async Task<IEnumerable<TecnicoComboDTO>> ObtenerTecnicosAsync()
         {
             var usuarios = await _repository.ObtenerTecnicosAsync();
 
-            return usuarios.Select(x => new ComboDTO
+            return usuarios.Select(x => new TecnicoComboDTO
             {
                 Id = x.Id,
-                Nombre = x.NombreApellido
+                Nombre = x.NombreApellido,
+                ProvinciaId = x.Provincia.Id
             });
         }
     }

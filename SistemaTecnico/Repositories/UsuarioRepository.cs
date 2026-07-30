@@ -94,6 +94,7 @@ namespace SistemaTecnico.Repositories
         public async Task<IEnumerable<Usuario>> ObtenerTecnicosAsync()
         {
             return await _context.Usuarios
+                .Include(x => x.Provincia)
                 .Where(x => x.Perfil.Id == 7 && x.Activo)
                 .OrderBy(x => x.NombreApellido)
                 .ToListAsync();
