@@ -127,17 +127,17 @@ public class TrabajoRepository : ITrabajoRepository
             .ToListAsync();
     }
 
-    public async Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado)
-    {
-        var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
+    //public async Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado)
+    //{
+    //    var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
 
-        if (trabajo == null)
-            throw new Exception("Trabajo no encontrado");
+    //    if (trabajo == null)
+    //        throw new Exception("Trabajo no encontrado");
 
-        trabajo.Estado = estado;
+    //    trabajo.Estado = estado;
 
-        await _context.SaveChangesAsync();
-    }
+    //    await _context.SaveChangesAsync();
+    //}
 
     public async Task GuardarTrabajoRealizado(
             int id,

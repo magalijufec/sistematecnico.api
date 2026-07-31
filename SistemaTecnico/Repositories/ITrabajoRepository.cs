@@ -7,8 +7,7 @@ public interface ITrabajoRepository
 {
     Task<IEnumerable<Trabajo>> ObtenerTodosAsync();
 
-    Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(
-        int idCliente);
+    Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(int idCliente);
 
     Task<Trabajo?> ObtenerPorIdAsync(
         int id);
@@ -29,7 +28,7 @@ public interface ITrabajoRepository
 
     Task<IEnumerable<Trabajo>> ObtenerPorFechasAsync(DateTime desde, DateTime hasta);
 
-    Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado);
+    //Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado);
 
     Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
     Task RegistrarPagoAsync(int idTrabajo);

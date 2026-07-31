@@ -118,13 +118,13 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("{id}/estado")]
-    public async Task<IActionResult> CambiarEstado(int id, CambiarEstadoDTO dto)
-    {
-        await _trabajoService.CambiarEstadoAsync(id, dto);
+    //[HttpPut("{id}/estado")]
+    //public async Task<IActionResult> CambiarEstado(int id, CambiarEstadoDTO dto)
+    //{
+    //    await _trabajoService.CambiarEstadoAsync(id, dto);
 
-        return NoContent();
-    }
+    //    return NoContent();
+    //}
 
     [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPut("{id}/trabajo-realizado")]
@@ -169,13 +169,116 @@ public class TrabajoController : ControllerBase
     {
         try
         {
-            await _trabajoService.RegistrarPagoAsync(id);
+            var resultado = await _trabajoService.RegistrarPagoAsync(id);
 
-            return NoContent();
+            if (!resultado)
+                return NotFound();
+
+            return Ok(new
+            {
+                mensaje = "Pago registrado correctamente."
+            });
         }
-        catch (KeyNotFoundException ex)
+        catch (UnauthorizedAccessException)
         {
-            return NotFound(ex.Message);
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+    }
+
+    [HttpPut("{id}/iniciar")]
+    [Authorize(Roles = "Tecnico")]
+    public async Task<IActionResult> IniciarTrabajo(int id)
+    {
+        try
+        {
+            var resultado =
+                await _trabajoService.IniciarTrabajoAsync(id);
+
+            if (!resultado)
+                return NotFound();
+
+            return Ok(new
+            {
+                mensaje = "Trabajo iniciado correctamente."
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+    }
+
+    [HttpPut("{id}/finalizar")]
+    [Authorize(Roles = "Tecnico")]
+    public async Task<IActionResult> FinalizarTrabajo(int id)
+    {
+        try
+        {
+            var resultado =
+                await _trabajoService.FinalizarTrabajoAsync(id);
+
+            if (!resultado)
+                return NotFound();
+
+            return Ok(new
+            {
+                mensaje = "Trabajo enviado a aprobación."
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+    }
+
+    [HttpPut("{id}/aprobar")]
+    [Authorize(Roles = "Sistemas,Administrador")]
+    public async Task<IActionResult> AprobarTrabajo(int id)
+    {
+        try
+        {
+            var resultado =
+                await _trabajoService.AprobarTrabajoAsync(id);
+
+            if (!resultado)
+                return NotFound();
+
+            return Ok(new
+            {
+                mensaje = "Trabajo aprobado correctamente."
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
         }
     }
 }

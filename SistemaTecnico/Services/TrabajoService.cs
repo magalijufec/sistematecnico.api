@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
@@ -48,6 +47,38 @@ namespace SistemaTecnico.Services
             return int.Parse(claim.Value);
         }
 
+        private (int UsuarioId, string Rol) ObtenerUsuarioActual()
+        {
+            var usuario = _httpContextAccessor.HttpContext?.User;
+
+            if (usuario == null ||
+                !usuario.Identity?.IsAuthenticated == true)
+            {
+                throw new UnauthorizedAccessException(
+                    "El usuario no está autenticado."
+                );
+            }
+
+            var usuarioIdClaim =
+                usuario.FindFirst(ClaimTypes.NameIdentifier);
+
+            var rolClaim =
+                usuario.FindFirst(ClaimTypes.Role);
+
+            if (usuarioIdClaim == null ||
+                rolClaim == null)
+            {
+                throw new UnauthorizedAccessException(
+                    "No se pudo obtener la información del usuario."
+                );
+            }
+
+            return (
+                int.Parse(usuarioIdClaim.Value),
+                rolClaim.Value
+            );
+        }
+
         private string ObtenerRolActual()
         {
             var claim = _httpContextAccessor.HttpContext?
@@ -62,8 +93,7 @@ namespace SistemaTecnico.Services
             return claim.Value;
         }
 
-        public async Task<IEnumerable<TrabajoResponseDto>>
-            ObtenerTrabajosNoFinalizadosAsync()
+        public async Task<IEnumerable<TrabajoResponseDto>> ObtenerTrabajosNoFinalizadosAsync()
         {
             var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
 
@@ -101,8 +131,7 @@ namespace SistemaTecnico.Services
                 .OrderByDescending(t => t.FechaSolicitud);
         }
 
-        private async Task<IEnumerable<Trabajo>>
-    ObtenerTrabajosSegunUsuarioAsync()
+        private async Task<IEnumerable<Trabajo>> ObtenerTrabajosSegunUsuarioAsync()
         {
             var usuarioId = ObtenerUsuarioIdActual();
             var rol = ObtenerRolActual();
@@ -155,8 +184,7 @@ namespace SistemaTecnico.Services
             return Enumerable.Empty<Trabajo>();
         }
 
-        public async Task<IEnumerable<TrabajoFinalizadoDTO>>
-            ObtenerTrabajosPendientesPagoAsync()
+        public async Task<IEnumerable<TrabajoFinalizadoDTO>>ObtenerTrabajosPendientesPagoAsync()
         {
             var trabajos =
                 await ObtenerTrabajosSegunUsuarioAsync();
@@ -206,8 +234,8 @@ namespace SistemaTecnico.Services
                     t => t.FechaFinalizado
                 );
         }
-        public async Task<IEnumerable<TrabajoFinalizadoDTO>>
-            ObtenerTrabajosFinalizadosAsync()
+
+        public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync()
         {
             var trabajos =
                 await ObtenerTrabajosSegunUsuarioAsync();
@@ -257,8 +285,8 @@ namespace SistemaTecnico.Services
                     t => t.FechaFinalizado
                 );
         }
-        public async Task<TrabajoResponseDto?>
-    ObtenerPorIdAsync(int id)
+
+        public async Task<TrabajoResponseDto?> ObtenerPorIdAsync(int id)
         {
             var t =
                 await _trabajoRepository.ObtenerPorIdAsync(id);
@@ -382,8 +410,6 @@ namespace SistemaTecnico.Services
             if (trabajo == null)
                 return false;
 
-            trabajo.FechaInicio = dto.FechaInicio;
-
             trabajo.Tecnico = await _usuarioRepository.ObtenerPorIdActivoAsync(dto.IdTecnico);
 
             trabajo.Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente);
@@ -415,12 +441,12 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task CambiarEstadoAsync(int idTrabajo, CambiarEstadoDTO dto)
-        {
-            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(dto.IdEstado);
+        //public async Task CambiarEstadoAsync(int idTrabajo, CambiarEstadoDTO dto)
+        //{
+        //    EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(dto.IdEstado);
 
-            await _trabajoRepository.CambiarEstadoAsync(idTrabajo, estado);
-        }
+        //    await _trabajoRepository.CambiarEstadoAsync(idTrabajo, estado);
+        //}
 
         public async Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
         {
@@ -430,11 +456,175 @@ namespace SistemaTecnico.Services
         public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
         {
             await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
+        }        
+
+        public async Task<bool> IniciarTrabajoAsync(int idTrabajo)
+        {
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+
+            if (rol != "Tecnico")
+                throw new UnauthorizedAccessException(
+                    "Solo un técnico puede iniciar un trabajo."
+                );
+
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Tecnico.Id != usuarioId)
+                throw new UnauthorizedAccessException(
+                    "El trabajo no está asignado a este técnico."
+                );
+
+            if (trabajo.Estado.Id != 1)
+                throw new InvalidOperationException(
+                    "El trabajo no se encuentra en estado Pendiente."
+                );
+
+            trabajo.FechaInicio = DateTime.Now;
+
+            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.EnProceso);
+            trabajo.Estado = estado;
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
         }
 
-        public async Task RegistrarPagoAsync(int idTrabajo)
+        public async Task<bool> FinalizarTrabajoAsync(int idTrabajo)
         {
-            await _trabajoRepository.RegistrarPagoAsync(idTrabajo);
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+
+            if (rol != "Tecnico")
+                throw new UnauthorizedAccessException(
+                    "Solo un técnico puede finalizar un trabajo."
+                );
+
+            var trabajo =
+                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Tecnico.Id != usuarioId)
+                throw new UnauthorizedAccessException(
+                    "El trabajo no está asignado a este técnico."
+                );
+
+            if (trabajo.Estado.Id != 2)
+                throw new InvalidOperationException(
+                    "El trabajo debe estar En proceso."
+                );
+
+            if (string.IsNullOrWhiteSpace(
+                trabajo.TrabajoRealizado))
+            {
+                throw new InvalidOperationException(
+                    "Debe indicar el trabajo realizado."
+                );
+            }
+
+            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.TrabajadoFinalizado);
+            trabajo.Estado = estado;
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
+        }
+
+        public async Task<bool> AprobarTrabajoAsync(int idTrabajo)
+        {
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+
+            if (rol != "Sistemas" &&
+                rol != "Administrador")
+            {
+                throw new UnauthorizedAccessException(
+                    "Solo Sistemas o Administrador pueden aprobar el trabajo."
+                );
+            }
+
+            var trabajo =
+                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Estado.Id != 3)
+                throw new InvalidOperationException(
+                    "El trabajo debe estar en estado Trabajo finalizado."
+                );
+
+            trabajo.FechaFinalizado = DateTime.Now;
+            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Aprobado);
+            trabajo.Estado = estado;
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
+        }
+
+        public async Task<bool> PuedeCargarFacturaAsync(int idTrabajo)
+        {
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+
+            if (rol != "Tecnico")
+                return false;
+
+            var trabajo =
+                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Tecnico.Id != usuarioId)
+                return false;
+
+            if (trabajo.Estado.Id != 4)
+                return false;
+
+            return true;
+        }
+
+        public async Task<bool> RegistrarPagoAsync(int idTrabajo)
+        {
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+
+            if (rol != "Pagos" &&
+                rol != "Administrador")
+            {
+                throw new UnauthorizedAccessException(
+                    "Solo Pagos o Administrador pueden registrar el pago."
+                );
+            }
+
+            var trabajo =
+                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Estado.Id != 5)
+                throw new InvalidOperationException(
+                    "El trabajo debe estar pendiente de pago."
+                );            
+
+            trabajo.FechaPagado = DateTime.Now;
+            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Finalizado);
+            trabajo.Estado = estado;
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
         }
     }
 }
