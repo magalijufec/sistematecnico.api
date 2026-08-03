@@ -1,5 +1,6 @@
 ﻿using SistemaTecnico.Data;
 using SistemaTecnico.DTO;
+using SistemaTecnico.Models;
 
 namespace SistemaTecnico.Repositories
 {
@@ -24,23 +25,23 @@ namespace SistemaTecnico.Repositories
             return new DashboardResponseDto
             {
                 Pendientes = _context.Trabajos
-                    .Count(x => x.Estado.Id == 1),
+                    .Count(x => x.Estado.Id == EstadosTrabajo.Pendiente),
 
                 EnProceso = _context.Trabajos
-                    .Count(x => x.Estado.Id == 2),
+                    .Count(x => x.Estado.Id == EstadosTrabajo.EnProceso),
 
                 PendientePago = _context.Trabajos
-                    .Count(x => x.Estado.Id == 3),
+                    .Count(x => x.Estado.Id == EstadosTrabajo.PendientePago),
 
                 Finalizados = _context.Trabajos
-                    .Count(x => x.Estado.Id == 4),
+                    .Count(x => x.Estado.Id == EstadosTrabajo.Finalizado),
 
                 TotalTrabajos = _context.Trabajos.Count(),
 
                 TotalClientes = _context.Clientes.Count(),
 
                 TotalTecnicos = _context.Usuarios
-                    .Count(x => x.Perfil.Id == 2),
+                    .Count(x => x.Perfil.Id == 7),
 
                 TrabajosHoy = _context.Trabajos
                     .Count(x => x.FechaSolicitud.Date == hoy),
