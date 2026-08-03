@@ -22,7 +22,9 @@ namespace SistemaTecnico.Services
                 NroCliente = c.NroCliente,
                 Nombre = c.Nombre,
                 Provincia = c.Provincia.Nombre,
+                ProvinciaId = c.ProvinciaId,
                 Ciudad = c.Ciudad.Nombre,
+                CiudadId = c.CiudadId,
                 Direccion = c.Direccion ?? string.Empty,
                 RazonSocial = c.RazonSocial ?? string.Empty
             });

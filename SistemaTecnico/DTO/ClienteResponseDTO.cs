@@ -7,7 +7,9 @@
         public string Nombre { get; set; } = string.Empty;
         public string CodNombre { get; set; }
         public string Provincia { get; set; }
+        public int ProvinciaId { get; set; }
         public string Ciudad { get; set; }
+        public int CiudadId { get; set; }
         public string Direccion { get; set; }
         public string RazonSocial { get; set; }
     }
