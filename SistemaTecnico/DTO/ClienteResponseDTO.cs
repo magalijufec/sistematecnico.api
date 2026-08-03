@@ -12,5 +12,6 @@
         public int CiudadId { get; set; }
         public string Direccion { get; set; }
         public string RazonSocial { get; set; }
+        public string Email { get; set; }
     }
 }
