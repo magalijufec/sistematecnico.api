@@ -49,7 +49,8 @@ namespace SistemaTecnico.Services
                 ProvinciaId = cliente.ProvinciaId,
                 Provincia = cliente.Provincia.Nombre,
                 CiudadId = cliente.CiudadId,
-                Ciudad = cliente.Ciudad.Nombre
+                Ciudad = cliente.Ciudad.Nombre,
+                Activo = cliente.Activo
             };
         }
 
@@ -63,7 +64,8 @@ namespace SistemaTecnico.Services
                 Email = dto.Email,
                 Direccion = dto.Direccion,
                 ProvinciaId = dto.IdProvincia,
-                CiudadId = dto.IdCiudad
+                CiudadId = dto.IdCiudad,
+                Activo = true
             };
 
             var creado = await _repository

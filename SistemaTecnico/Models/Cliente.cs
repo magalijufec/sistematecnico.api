@@ -14,5 +14,6 @@
         public Ciudad Ciudad { get; set; }
         public IList<Trabajo> Trabajos { get; set; } = new List<Trabajo>();
         public string? Email { get; set; }
+        public bool Activo { get; set; }
     }
 }

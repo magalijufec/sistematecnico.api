@@ -15,10 +15,12 @@ namespace SistemaTecnico.Repositories
 
         public async Task<IEnumerable<Cliente>> ObtenerTodosAsync()
         {
-            return await _context.Clientes
-                .Include(c => c.Provincia)
-                .Include(c => c.Ciudad)
-                .ToListAsync();
+            var clientes = await _context.Clientes
+            .Include(c => c.Provincia)
+            .Include(c => c.Ciudad)
+            .ToListAsync();     
+
+            return clientes.OrderBy(c => int.TryParse(c.NroCliente, out var n) ? n : int.MaxValue);
         }
 
         public async Task<Cliente?> ObtenerPorIdAsync(int id)
@@ -52,6 +54,7 @@ namespace SistemaTecnico.Repositories
             existente.Direccion = cliente.Direccion;
             existente.ProvinciaId = cliente.ProvinciaId;
             existente.CiudadId = cliente.CiudadId;
+            existente.Activo = cliente.Activo;
 
             await _context.SaveChangesAsync();
 
