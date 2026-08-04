@@ -60,9 +60,14 @@ builder.Services.AddScoped<IProvinciaService, ProvinciaService>();
 builder.Services.AddScoped<ICiudadRepository, CiudadRepository>();
 builder.Services.AddScoped<ICiudadService, CiudadService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITrabajoImagenComparacionRepository, TrabajoImagenComparacionRepository>();
 builder.Services.AddScoped<ITrabajoImagenComparacionService, TrabajoImagenComparacionService>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings")
+);
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

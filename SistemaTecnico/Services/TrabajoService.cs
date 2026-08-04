@@ -14,6 +14,7 @@ namespace SistemaTecnico.Services
         private readonly ITareaRepository _tareaRepository;
         private readonly IWebHostEnvironment _environment;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IEmailService _emailService;
 
         public TrabajoService(
             ITrabajoRepository trabajoRepository,
@@ -22,7 +23,8 @@ namespace SistemaTecnico.Services
             IEstadoRepository estadoRepository,
             ITareaRepository tareaRepository,
             IWebHostEnvironment environment,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IEmailService emailService)
         {
             _trabajoRepository = trabajoRepository;
             _usuarioRepository = usuarioRepository;
@@ -31,6 +33,7 @@ namespace SistemaTecnico.Services
             _tareaRepository = tareaRepository;
             _environment = environment;
             _httpContextAccessor = httpContextAccessor;
+            _emailService = emailService;
         }
 
         private int ObtenerUsuarioIdActual()
@@ -399,6 +402,47 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.AgregarAsync(trabajo);
             await _trabajoRepository.GuardarCambiosAsync();
+
+            if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
+            {
+                await _emailService.EnviarAsync(
+                    trabajo.Tecnico.Email,
+                    "Nuevo trabajo asignado",
+                    $"""
+        <h2>Nuevo trabajo asignado</h2>
+
+        <p>
+            Hola {trabajo.Tecnico.NombreApellido},
+        </p>
+
+        <p>
+            Se te ha asignado un nuevo trabajo.
+        </p>
+
+        <p>
+            <strong>Cliente:</strong>
+            {trabajo.Cliente.NroCliente} -
+            {trabajo.Cliente.Nombre}
+        </p>
+
+        <p>
+            <strong>Tarea:</strong>
+            {trabajo.Tarea.Descripcion}
+        </p>
+
+        <p>
+            <strong>Estado:</strong>
+            {trabajo.Estado?.Nombre}
+        </p>
+
+        <p>
+            Ingresá al Sistema Técnico
+            para ver los detalles.
+        </p>
+        """
+                );
+            }
+
             return await ObtenerPorIdAsync(trabajo.Id)
                    ?? throw new Exception("Error al recuperar el trabajo creado.");
         }
@@ -489,7 +533,7 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.ActualizarAsync(trabajo);
 
-            await _trabajoRepository.GuardarCambiosAsync();
+            await _trabajoRepository.GuardarCambiosAsync();            
 
             return true;
         }
@@ -541,8 +585,7 @@ namespace SistemaTecnico.Services
         {
             var (usuarioId, rol) = ObtenerUsuarioActual();
 
-            if (rol != "Sistemas" &&
-                rol != "Administrador")
+            if (rol != "Sistemas" && rol != "Administrador")
             {
                 throw new UnauthorizedAccessException(
                     "Solo Sistemas o Administrador pueden aprobar el trabajo."
