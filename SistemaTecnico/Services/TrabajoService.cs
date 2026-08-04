@@ -190,7 +190,7 @@ namespace SistemaTecnico.Services
                 await ObtenerTrabajosSegunUsuarioAsync();
 
             return trabajos
-                .Where(t => t.Estado.Id == 3)
+                .Where(t => t.Estado.Id == EstadosTrabajo.PendientePago)
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
@@ -241,7 +241,7 @@ namespace SistemaTecnico.Services
                 await ObtenerTrabajosSegunUsuarioAsync();
 
             return trabajos
-                .Where(t => t.Estado.Id == 4)
+                .Where(t => t.Estado.Id == EstadosTrabajo.Finalizado)
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
@@ -527,7 +527,7 @@ namespace SistemaTecnico.Services
                 );
             }
 
-            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.TrabajadoFinalizado);
+            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.TrabajoFinalizado);
             trabajo.Estado = estado;
 
             await _trabajoRepository.ActualizarAsync(trabajo);
