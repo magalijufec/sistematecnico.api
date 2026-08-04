@@ -91,7 +91,7 @@ namespace SistemaTecnico.Services
             await _repository.GuardarCambiosAsync();
         }
 
-        public async Task<bool> ActualizarAsync(int id, UsuarioDTO usuario)
+        public async Task<bool> ActualizarAsync(int id, UsuarioActualizarDTO usuario)
         {
             var existente = await _repository.ObtenerPorIdActivoAsync(id);
 
@@ -111,6 +111,14 @@ namespace SistemaTecnico.Services
                 existente.Ciudad = await _ciudadRepository.ObtenerPorIdAsync(usuario.IdCiudad.Value);
             if (usuario.IdCliente != null)
                 existente.Cliente = await _clienteRepository.ObtenerPorIdAsync(usuario.IdCliente.Value);
+
+            if (usuario.CambiarPassword)
+            {
+                if (string.IsNullOrWhiteSpace(usuario.Password))
+                    throw new Exception("Debe ingresar una nueva contraseña.");
+
+                existente.PasswordHash = BCrypt.Net.BCrypt.HashPassword(usuario.Password);
+            }
 
             await _repository.ActualizarAsync(existente);
 

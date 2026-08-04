@@ -12,7 +12,7 @@ namespace SistemaTecnico.Services
 
         Task CrearAsync(UsuarioDTO usuario);
 
-        Task<bool> ActualizarAsync(int id, UsuarioDTO usuario);
+        Task<bool> ActualizarAsync(int id, UsuarioActualizarDTO usuario);
 
         Task<bool> EliminarAsync(int id);
         Task<IEnumerable<TecnicoComboDTO>> ObtenerTecnicosAsync();

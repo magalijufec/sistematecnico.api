@@ -57,7 +57,7 @@ namespace SistemaTecnico.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] UsuarioDTO usuario)
+        public async Task<IActionResult> Put(int id, [FromBody] UsuarioActualizarDTO usuario)
         {
             var actualizado = await _service.ActualizarAsync(id, usuario);
 
