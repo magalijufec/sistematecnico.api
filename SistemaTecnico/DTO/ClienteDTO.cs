@@ -10,8 +10,8 @@
 
         public string? Direccion { get; set; }
 
-        public int IdProvincia { get; set; }
+        public int ProvinciaId { get; set; }
 
-        public int IdCiudad { get; set; }
+        public int CiudadId { get; set; }
     }
 }

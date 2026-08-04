@@ -63,8 +63,8 @@ namespace SistemaTecnico.Services
                 Nombre = dto.Nombre,
                 Email = dto.Email,
                 Direccion = dto.Direccion,
-                ProvinciaId = dto.IdProvincia,
-                CiudadId = dto.IdCiudad,
+                ProvinciaId = dto.ProvinciaId,
+                CiudadId = dto.CiudadId,
                 Activo = true
             };
 
@@ -102,8 +102,8 @@ namespace SistemaTecnico.Services
             cliente.Nombre = dto.Nombre;
             cliente.Email = dto.Email;
             cliente.Direccion = dto.Direccion;
-            cliente.ProvinciaId = dto.IdProvincia;
-            cliente.CiudadId = dto.IdCiudad;
+            cliente.ProvinciaId = dto.ProvinciaId;
+            cliente.CiudadId = dto.CiudadId;
 
             return await _repository
                 .ActualizarAsync(cliente);
