@@ -34,6 +34,18 @@ namespace SistemaTecnico.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Trabajo>()
+                .HasOne(t => t.Tecnico)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Trabajo>()
+                .HasOne(t => t.UsuarioCreacion)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Cliente>()
                 .HasOne(c => c.Provincia)
                 .WithMany()

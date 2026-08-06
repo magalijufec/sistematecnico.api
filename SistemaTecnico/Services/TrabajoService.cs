@@ -397,50 +397,21 @@ namespace SistemaTecnico.Services
                 Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente),
                 Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea),
                 Comentarios = dto.Comentarios,
-                Estado = await _estadoRepository.ObtenerPorIdAsync(1)
+                Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Pendiente)
             };
 
             await _trabajoRepository.AgregarAsync(trabajo);
             await _trabajoRepository.GuardarCambiosAsync();
 
-            if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
+            if (!string.IsNullOrWhiteSpace(trabajo.Tecnico?.Email))
             {
+                var html = TrabajoEmailTemplates.NuevoTrabajoAsignado(trabajo.Tecnico.NombreApellido,
+                trabajo.Id, $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre} - {trabajo.Cliente?.Direccion}", trabajo.Tarea.Descripcion);
+
                 await _emailService.EnviarAsync(
                     trabajo.Tecnico.Email,
-                    "Nuevo trabajo asignado",
-                    $"""
-        <h2>Nuevo trabajo asignado</h2>
-
-        <p>
-            Hola {trabajo.Tecnico.NombreApellido},
-        </p>
-
-        <p>
-            Se te ha asignado un nuevo trabajo.
-        </p>
-
-        <p>
-            <strong>Cliente:</strong>
-            {trabajo.Cliente.NroCliente} -
-            {trabajo.Cliente.Nombre}
-        </p>
-
-        <p>
-            <strong>Tarea:</strong>
-            {trabajo.Tarea.Descripcion}
-        </p>
-
-        <p>
-            <strong>Estado:</strong>
-            {trabajo.Estado?.Nombre}
-        </p>
-
-        <p>
-            Ingresá al Sistema Técnico
-            para ver los detalles.
-        </p>
-        """
-                );
+                    $"Nuevo trabajo #{trabajo.Id}",
+                    html);
             }
 
             return await ObtenerPorIdAsync(trabajo.Id)
@@ -485,13 +456,6 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        //public async Task CambiarEstadoAsync(int idTrabajo, CambiarEstadoDTO dto)
-        //{
-        //    EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(dto.IdEstado);
-
-        //    await _trabajoRepository.CambiarEstadoAsync(idTrabajo, estado);
-        //}
-
         public async Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
         {
             await _trabajoRepository.GuardarTrabajoRealizado(id, dto);
@@ -500,6 +464,25 @@ namespace SistemaTecnico.Services
         public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
         {
             await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
+
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            var usuarioPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
+
+            foreach (var user in usuarioPagos)
+            {
+                if (!string.IsNullOrWhiteSpace(user.Email))
+                {
+                    var html = TrabajoEmailTemplates.FacturaPendientePago(trabajo.Id, 
+                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
+
+                    await _emailService.EnviarAsync(
+                        trabajo.Tecnico.Email,
+                        $"Factura pendiente de pago #{trabajo.Id}",
+                        html);
+                }
+            }
+            
         }        
 
         public async Task<bool> IniciarTrabajoAsync(int idTrabajo)
@@ -533,7 +516,20 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.ActualizarAsync(trabajo);
 
-            await _trabajoRepository.GuardarCambiosAsync();            
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            //envia mail al usuario de sistemas que asigno el trabajo
+
+            if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
+            {
+                var html = TrabajoEmailTemplates.TrabajoIniciado(trabajo.Tecnico.NombreApellido, trabajo.Id,
+                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tarea.Descripcion);
+
+                await _emailService.EnviarAsync(
+                    trabajo.Tecnico?.Email,
+                    $"Trabajo iniciado #{trabajo.Id}",
+                    html);
+            }
 
             return true;
         }
@@ -578,6 +574,18 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.GuardarCambiosAsync();
 
+            //se le avisa a sistemas que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
+            if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
+            {
+                var html = TrabajoEmailTemplates.TrabajoPendienteAprobacion(trabajo.Id,
+                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
+
+                await _emailService.EnviarAsync(
+                    trabajo.UsuarioCreacion.Email,
+                    $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
+                    html);
+            }
+
             return true;
         }
 
@@ -611,27 +619,17 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.GuardarCambiosAsync();
 
-            return true;
-        }
+            //se le avisa al tecnico
+            if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
+            {
+                var html = TrabajoEmailTemplates.TrabajoAprobado(trabajo.Tecnico.NombreApellido, trabajo.Id,
+                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}",  trabajo.Tarea.Descripcion);
 
-        public async Task<bool> PuedeCargarFacturaAsync(int idTrabajo)
-        {
-            var (usuarioId, rol) = ObtenerUsuarioActual();
-
-            if (rol != "Tecnico")
-                return false;
-
-            var trabajo =
-                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
-
-            if (trabajo == null)
-                return false;
-
-            if (trabajo.Tecnico.Id != usuarioId)
-                return false;
-
-            if (trabajo.Estado.Id != 4)
-                return false;
+                await _emailService.EnviarAsync(
+                    trabajo.Tecnico?.Email,
+                    $"Trabajo aprobado #{trabajo.Id}",
+                    html);
+            }
 
             return true;
         }
@@ -666,6 +664,17 @@ namespace SistemaTecnico.Services
             await _trabajoRepository.ActualizarAsync(trabajo);
 
             await _trabajoRepository.GuardarCambiosAsync();
+
+            if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
+            {
+                var html = TrabajoEmailTemplates.TrabajoFinalizado(trabajo.Id, 
+                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
+
+                await _emailService.EnviarAsync(
+                    trabajo.Tecnico?.Email,
+                    $"Trabajo pagado #{trabajo.Id}",
+                    html);
+            }
 
             return true;
         }

@@ -156,11 +156,6 @@ namespace SistemaTecnico.Services
                     Trabajado finalizado
                 </p>
             </div>
-
-            <p>
-                Por favor, ingresá al Sistema Técnico
-                para revisar y aprobar el trabajo.
-            </p>
             """
             );
         }

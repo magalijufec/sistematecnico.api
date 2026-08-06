@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaTecnico.Data;
 
@@ -11,9 +12,11 @@ using SistemaTecnico.Data;
 namespace SistemaTecnico.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260805131527_addUsuarioCreacionTablaTrabajo")]
+    partial class addUsuarioCreacionTablaTrabajo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -242,7 +245,7 @@ namespace SistemaTecnico.Migrations
                     b.Property<string>("TrabajoRealizado")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UsuarioCreacionId")
+                    b.Property<int?>("UsuarioCreacionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -412,8 +415,7 @@ namespace SistemaTecnico.Migrations
                     b.HasOne("SistemaTecnico.Models.Usuario", "UsuarioCreacion")
                         .WithMany()
                         .HasForeignKey("UsuarioCreacionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Cliente");
 

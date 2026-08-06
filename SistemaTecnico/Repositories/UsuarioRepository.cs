@@ -99,5 +99,14 @@ namespace SistemaTecnico.Repositories
                 .OrderBy(x => x.NombreApellido)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Usuario>> ObtenerPorPerfil(int idPerfil)
+        {
+            return await _context.Usuarios
+                .Include(x => x.Provincia)
+                .Where(x => x.Perfil.Id == idPerfil && x.Activo)
+                .OrderBy(x => x.NombreApellido)
+                .ToListAsync();
+        }
     }
 }
