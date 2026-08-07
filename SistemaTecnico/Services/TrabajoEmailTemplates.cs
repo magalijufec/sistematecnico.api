@@ -334,164 +334,121 @@ namespace SistemaTecnico.Services
         // ============================================================
 
         private static string Layout(
-            string titulo,
-            string contenido)
+    string titulo,
+    string contenido)
         {
             return $$"""
-        <!DOCTYPE html>
+<!DOCTYPE html>
+<html>
 
-        <html>
+<head>
 
-        <head>
+    <meta charset="UTF-8">
 
-            <meta charset="UTF-8">
+    <style>
 
-            <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
 
-                body {font - family: Arial,
-                        Helvetica,
-                        sans-serif;
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
 
-                    background-color:
-                        #f4f6f8;
+        .header {
+            background-color: #1976d2;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
 
-                    margin: 0;
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
 
-                    padding: 0;
-                }
+        .content {
+            padding: 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
 
-                .container {max - width:
-                        600px;
+        .content h2 {
+            margin-top: 0;
+            color: #1976d2;
+        }
 
-                    margin:
-                        30px auto;
+        .info {
+            background-color: #f5f5f5;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+        }
 
-                    background-color:
-                        #ffffff;
+        .info p {
+            margin: 5px 0;
+        }
 
-                    border-radius:
-                        8px;
+        .footer {
+            background-color: #eeeeee;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #666666;
+        }
 
-                    overflow:
-                        hidden;
+    </style>
 
-                    box-shadow:
-                        0 2px 8px
-                        rgba(0,0,0,0.1);
-                }
+</head>
 
-                .header {background - color:
-                        #1976d2;
+<body>
 
-                    color:
-                        #ffffff;
+    <div class="container">
 
-                    padding:
-                        20px;
+        <div class="header">
 
-                    text-align:
-                        center;
-                }
+            <h1>
+                Sistema Técnico
+            </h1>
 
-                .header h1 {margin:
-                        0;
+        </div>
 
-                    font-size:
-                        22px;
-                }
+        <div class="content">
 
-                .content {padding:
-                        30px;
+            <h2>
+                {{titulo}}
+            </h2>
 
-                    color:
-                        #333333;
+            {{contenido}}
 
-                    line-height:
-                        1.6;
-                }
+        </div>
 
-                .info {background - color:
-                        #f5f5f5;
+        <div class="footer">
 
-                    border-left:
-                        4px solid #1976d2;
+            Este correo fue generado automáticamente
+            por el Sistema Técnico.
 
-                    padding:
-                        15px;
+            <br>
 
-                    margin:
-                        20px 0;
-                }
+            Por favor, no respondas a este correo.
 
-                .info p {margin:
-                        5px 0;
-                }
+        </div>
 
-                .footer {background - color:
-                        #eeeeee;
+    </div>
 
-                    padding:
-                        15px;
+</body>
 
-                    text-align:
-                        center;
-
-                    font-size:
-                        12px;
-
-                    color:
-                        #666666;
-                }
-
-            </style>
-
-        </head>
-
-
-        <body>
-
-            <div class="container">
-
-                <div class="header">
-
-                    <h1>
-                        Sistema Técnico
-                    </h1>
-
-                </div>
-
-
-                <div class="content">
-
-                    <h2>
-                        {titulo}
-                    </h2>
-
-                    {contenido}
-
-                </div>
-
-
-                <div class="footer">
-
-                    Este correo fue generado
-                    automáticamente por el
-                    Sistema Técnico.
-
-                    <br>
-
-                    Por favor, no respondas
-                    a este correo.
-
-                </div>
-
-            </div>
-
-        </body>
-
-        </html>
-        """;
+</html>
+""";
         }
     }
 
-}
+  }

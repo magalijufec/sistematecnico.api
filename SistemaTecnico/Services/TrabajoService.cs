@@ -101,7 +101,7 @@ namespace SistemaTecnico.Services
             var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
 
             return trabajos
-                .Where(t => t.Estado.Id != 4)
+                .Where(t => t.Estado.Id != EstadosTrabajo.Finalizado)
                 .Select(t => new TrabajoResponseDto
                 {
                     Id = t.Id,
@@ -390,6 +390,13 @@ namespace SistemaTecnico.Services
             if (!await _clienteRepository.ExisteAsync(dto.IdCliente))
                 throw new Exception("El cliente no existe.");
 
+            var usuarioId = int.Parse(
+                                    _httpContextAccessor.HttpContext!
+                                        .User
+                                        .FindFirst(ClaimTypes.NameIdentifier)!
+                                        .Value
+                                );            
+
             var trabajo = new Trabajo
             {
                 FechaSolicitud = DateTime.Now,
@@ -397,7 +404,8 @@ namespace SistemaTecnico.Services
                 Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente),
                 Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea),
                 Comentarios = dto.Comentarios,
-                Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Pendiente)
+                Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Pendiente),
+                UsuarioCreacion = await _usuarioRepository.ObtenerPorIdActivoAsync(usuarioId)
             };
 
             await _trabajoRepository.AgregarAsync(trabajo);
@@ -459,31 +467,7 @@ namespace SistemaTecnico.Services
         public async Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
         {
             await _trabajoRepository.GuardarTrabajoRealizado(id, dto);
-        }
-
-        public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
-        {
-            await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
-
-            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
-
-            var usuarioPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
-
-            foreach (var user in usuarioPagos)
-            {
-                if (!string.IsNullOrWhiteSpace(user.Email))
-                {
-                    var html = TrabajoEmailTemplates.FacturaPendientePago(trabajo.Id, 
-                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
-
-                    await _emailService.EnviarAsync(
-                        trabajo.Tecnico.Email,
-                        $"Factura pendiente de pago #{trabajo.Id}",
-                        html);
-                }
-            }
-            
-        }        
+        }  
 
         public async Task<bool> IniciarTrabajoAsync(int idTrabajo)
         {
@@ -514,10 +498,6 @@ namespace SistemaTecnico.Services
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.EnProceso);
             trabajo.Estado = estado;
 
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
-
             //envia mail al usuario de sistemas que asigno el trabajo
 
             if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
@@ -530,6 +510,10 @@ namespace SistemaTecnico.Services
                     $"Trabajo iniciado #{trabajo.Id}",
                     html);
             }
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
 
             return true;
         }
@@ -570,10 +554,6 @@ namespace SistemaTecnico.Services
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.TrabajoFinalizado);
             trabajo.Estado = estado;
 
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
-
             //se le avisa a sistemas que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
             if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
             {
@@ -585,6 +565,10 @@ namespace SistemaTecnico.Services
                     $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
                     html);
             }
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
 
             return true;
         }
@@ -615,10 +599,6 @@ namespace SistemaTecnico.Services
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Aprobado);
             trabajo.Estado = estado;
 
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
-
             //se le avisa al tecnico
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
             {
@@ -631,7 +611,41 @@ namespace SistemaTecnico.Services
                     html);
             }
 
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
             return true;
+        }
+
+        public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
+        {
+            await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
+
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendientePago);
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            var usuarioPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
+
+            foreach (var user in usuarioPagos)
+            {
+                if (!string.IsNullOrWhiteSpace(user.Email))
+                {
+                    var html = TrabajoEmailTemplates.FacturaPendientePago(trabajo.Id,
+                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
+
+                    await _emailService.EnviarAsync(
+                        trabajo.Tecnico.Email,
+                        $"Factura pendiente de pago #{trabajo.Id}",
+                        html);
+                }
+            }
+
         }
 
         public async Task<bool> RegistrarPagoAsync(int idTrabajo)
@@ -661,10 +675,6 @@ namespace SistemaTecnico.Services
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Finalizado);
             trabajo.Estado = estado;
 
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
-
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
             {
                 var html = TrabajoEmailTemplates.TrabajoFinalizado(trabajo.Id, 
@@ -675,6 +685,10 @@ namespace SistemaTecnico.Services
                     $"Trabajo pagado #{trabajo.Id}",
                     html);
             }
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
 
             return true;
         }

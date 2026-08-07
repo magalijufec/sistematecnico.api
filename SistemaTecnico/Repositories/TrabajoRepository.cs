@@ -73,6 +73,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Cliente.Ciudad)
             .Include(t => t.Imagenes)
             .Include(t => t.Tarea)
+            .Include(t => t.UsuarioCreacion)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id);
     }
