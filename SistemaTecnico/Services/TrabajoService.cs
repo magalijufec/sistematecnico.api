@@ -361,7 +361,9 @@ namespace SistemaTecnico.Services
                     t.Factura,
 
                 CantidadImagenes =
-                    t.Imagenes.Count
+                    t.Imagenes.Count,
+
+                Solicitante = t.UsuarioCreacion?.NombreApellido
             };
         }
 
