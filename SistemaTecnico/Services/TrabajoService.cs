@@ -464,10 +464,10 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
-        {
-            await _trabajoRepository.GuardarTrabajoRealizado(id, dto);
-        }  
+        //public async Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
+        //{
+        //    await _trabajoRepository.GuardarTrabajoRealizado(id, dto);
+        //}  
 
         public async Task<bool> IniciarTrabajoAsync(int idTrabajo)
         {
@@ -518,7 +518,7 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task<bool> FinalizarTrabajoAsync(int idTrabajo)
+        public async Task<bool> FinalizarTrabajoAsync(int idTrabajo, TrabajoRealizadoDTO dto)
         {
             var (usuarioId, rol) = ObtenerUsuarioActual();
 
@@ -543,8 +543,7 @@ namespace SistemaTecnico.Services
                     "El trabajo debe estar En proceso."
                 );
 
-            if (string.IsNullOrWhiteSpace(
-                trabajo.TrabajoRealizado))
+            if (string.IsNullOrWhiteSpace(dto.TrabajoRealizado))
             {
                 throw new InvalidOperationException(
                     "Debe indicar el trabajo realizado."
@@ -553,6 +552,7 @@ namespace SistemaTecnico.Services
 
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.TrabajoFinalizado);
             trabajo.Estado = estado;
+            trabajo.TrabajoRealizado = dto.TrabajoRealizado;
 
             //se le avisa a sistemas que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
             if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
@@ -626,10 +626,6 @@ namespace SistemaTecnico.Services
 
             trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendientePago);
 
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
-
             var usuarioPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
 
             foreach (var user in usuarioPagos)
@@ -645,6 +641,11 @@ namespace SistemaTecnico.Services
                         html);
                 }
             }
+
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
 
         }
 
@@ -675,6 +676,10 @@ namespace SistemaTecnico.Services
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Finalizado);
             trabajo.Estado = estado;
 
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
             {
                 var html = TrabajoEmailTemplates.TrabajoFinalizado(trabajo.Id, 
@@ -686,9 +691,65 @@ namespace SistemaTecnico.Services
                     html);
             }
 
-            await _trabajoRepository.ActualizarAsync(trabajo);
+            return true;
+        }
 
+        public async Task<bool> SolicitarMejoraAsync(int id, SolicitarMejoraDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Comentario))
+                throw new InvalidOperationException(
+                    "Debe indicar qué mejora debe realizar el técnico."
+                );
+
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(id);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Estado.Id != EstadosTrabajo.TrabajoFinalizado)
+            {
+                throw new InvalidOperationException(
+                    "Solo se puede solicitar una mejora cuando el trabajo está finalizado."
+                );
+            }
+
+            if (trabajo.Tecnico == null)
+            {
+                throw new InvalidOperationException(
+                    "El trabajo no tiene un técnico asignado."
+                );
+            }
+
+            trabajo.Comentarios = dto.Comentario.Trim();
+
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Pendiente);
+
+            // El trabajo realizado anterior puede quedar
+            // registrado hasta que el técnico lo reemplace.
+            // Si querés borrarlo:
+            //
+            // trabajo.TrabajoRealizado = null;
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
             await _trabajoRepository.GuardarCambiosAsync();
+
+            if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
+            {
+                var html =
+                    TrabajoEmailTemplates.MejoraTrabajoSolicitada(
+                        trabajo.Tecnico.NombreApellido,
+                        trabajo.Id,
+                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
+                        trabajo.Tarea.Descripcion,
+                        trabajo.Comentarios
+                    );
+
+                await _emailService.EnviarAsync(
+                    trabajo.Tecnico.Email,
+                    $"Se solicitó una mejora - Trabajo #{trabajo.Id}",
+                    html
+                );
+            }
 
             return true;
         }

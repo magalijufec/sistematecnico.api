@@ -16,18 +16,18 @@ namespace SistemaTecnico.Services
 
         Task<bool> EliminarAsync(int id);
 
-        //Task CambiarEstadoAsync(int idTrabajo, CambiarEstadoDTO dto);
-
-        Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
+        //Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
 
         Task SubirFacturaAsync(int idTrabajo, IFormFile archivo);
 
         Task<bool> IniciarTrabajoAsync(int idTrabajo);
 
-        Task<bool> FinalizarTrabajoAsync(int idTrabajo);
+        Task<bool> FinalizarTrabajoAsync(int idTrabajo, TrabajoRealizadoDTO dto);
 
         Task<bool> AprobarTrabajoAsync(int idTrabajo);
 
         Task<bool> RegistrarPagoAsync(int idTrabajo);
+
+        Task<bool> SolicitarMejoraAsync(int id, SolicitarMejoraDTO dto);
     }
 }

@@ -31,8 +31,7 @@ public class TrabajoRepository : ITrabajoRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Trabajo>> ObtenerPorTecnicoAsync(
-        int idTecnico)
+    public async Task<IEnumerable<Trabajo>> ObtenerPorTecnicoAsync(int idTecnico)
     {
         return await _context.Trabajos
             .Include(t => t.Cliente)
@@ -47,8 +46,7 @@ public class TrabajoRepository : ITrabajoRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(
-        int idCliente)
+    public async Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(int idCliente)
     {
         return await _context.Trabajos
             .Include(t => t.Cliente)
@@ -76,8 +74,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.UsuarioCreacion)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id);
-    }
-    
+    }    
 
     public async Task AgregarAsync(Trabajo trabajo)
     {
@@ -128,31 +125,19 @@ public class TrabajoRepository : ITrabajoRepository
             .ToListAsync();
     }
 
-    //public async Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado)
+    //public async Task GuardarTrabajoRealizado(
+    //        int id,
+    //        TrabajoRealizadoDTO dto)
     //{
-    //    var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
+    //    var trabajo = await _context.Trabajos.FindAsync(id);
 
     //    if (trabajo == null)
     //        throw new Exception("Trabajo no encontrado");
 
-    //    trabajo.Estado = estado;
+    //    trabajo.TrabajoRealizado = dto.TrabajoRealizado;
 
     //    await _context.SaveChangesAsync();
     //}
-
-    public async Task GuardarTrabajoRealizado(
-            int id,
-            TrabajoRealizadoDTO dto)
-    {
-        var trabajo = await _context.Trabajos.FindAsync(id);
-
-        if (trabajo == null)
-            throw new Exception("Trabajo no encontrado");
-
-        trabajo.TrabajoRealizado = dto.TrabajoRealizado;
-
-        await _context.SaveChangesAsync();
-    }
 
     public async Task RegistrarPagoAsync(int idTrabajo)
     {

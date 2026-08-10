@@ -1,5 +1,4 @@
-﻿using SistemaTecnico.DTO;
-using SistemaTecnico.Models;
+﻿using SistemaTecnico.Models;
 
 namespace SistemaTecnico.Repositories;
 
@@ -9,8 +8,7 @@ public interface ITrabajoRepository
 
     Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(int idCliente);
 
-    Task<Trabajo?> ObtenerPorIdAsync(
-        int id);
+    Task<Trabajo?> ObtenerPorIdAsync(int id);
 
     Task AgregarAsync(Trabajo trabajo);
 
@@ -28,9 +26,8 @@ public interface ITrabajoRepository
 
     Task<IEnumerable<Trabajo>> ObtenerPorFechasAsync(DateTime desde, DateTime hasta);
 
-    //Task CambiarEstadoAsync(int idTrabajo, EstadoTrabajo estado);
-
-    Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
+    //Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
     Task RegistrarPagoAsync(int idTrabajo);
+
     Task SubirFacturaAsync(int idTrabajo, IFormFile archivo, IWebHostEnvironment environment);
 }

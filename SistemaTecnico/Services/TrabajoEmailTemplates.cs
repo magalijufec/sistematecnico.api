@@ -333,6 +333,62 @@ namespace SistemaTecnico.Services
         // LAYOUT GENERAL
         // ============================================================
 
+        public static string MejoraTrabajoSolicitada(
+    string nombreTecnico,
+    int trabajoId,
+    string cliente,
+    string tarea,
+    string comentario)
+        {
+            var contenido = $$"""
+        <p>
+            Hola {{nombreTecnico}},
+        </p>
+
+        <p>
+            Sistemas ha solicitado una mejora sobre el trabajo
+            <strong>#{{trabajoId}}</strong>.
+        </p>
+
+        <div class="info">
+
+            <p>
+                <strong>Cliente:</strong>
+                {{cliente}}
+            </p>
+
+            <p>
+                <strong>Tarea:</strong>
+                {{tarea}}
+            </p>
+
+            <p>
+                <strong>Motivo de la mejora:</strong>
+            </p>
+
+            <p>
+                {{comentario}}
+            </p>
+
+        </div>
+
+        <p>
+            El trabajo volvió al estado
+            <strong>Pendiente</strong>.
+        </p>
+
+        <p>
+            Por favor, ingresá al Sistema Técnico para
+            revisar la observación y volver a realizar el trabajo.
+        </p>
+        """;
+
+            return Layout(
+                "Solicitud de mejora",
+                contenido
+            );
+        }
+
         private static string Layout(
     string titulo,
     string contenido)

@@ -118,13 +118,13 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
-    [Authorize(Roles = "Administrador,Tecnico")]
-    [HttpPut("{id}/trabajo-realizado")]
-    public async Task<IActionResult> GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
-    {
-        await _trabajoService.GuardarTrabajoRealizado(id, dto);
-        return NoContent();
-    }
+    //[Authorize(Roles = "Administrador,Tecnico")]
+    //[HttpPut("{id}/trabajo-realizado")]
+    //public async Task<IActionResult> GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
+    //{
+    //    await _trabajoService.GuardarTrabajoRealizado(id, dto);
+    //    return NoContent();
+    //}
 
     [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPost("{id}/factura")]
@@ -216,12 +216,11 @@ public class TrabajoController : ControllerBase
 
     [HttpPut("{id}/finalizar")]
     [Authorize(Roles = "Tecnico")]
-    public async Task<IActionResult> FinalizarTrabajo(int id)
+    public async Task<IActionResult> FinalizarTrabajo(int id, TrabajoRealizadoDTO dto)
     {
         try
         {
-            var resultado =
-                await _trabajoService.FinalizarTrabajoAsync(id);
+            var resultado = await _trabajoService.FinalizarTrabajoAsync(id, dto);
 
             if (!resultado)
                 return NotFound();
@@ -264,6 +263,34 @@ public class TrabajoController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+    }
+
+    [HttpPut("{id}/solicitar-mejora")]
+    [Authorize(Roles = "Sistemas")]
+    public async Task<IActionResult> SolicitarMejora(
+    int id,
+    SolicitarMejoraDTO dto)
+    {
+        try
+        {
+            var resultado =
+                await _trabajoService.SolicitarMejoraAsync(id, dto);
+
+            if (!resultado)
+                return NotFound();
+
+            return Ok(new
+            {
+                mensaje = "Se solicitó una mejora al técnico."
+            });
         }
         catch (InvalidOperationException ex)
         {
