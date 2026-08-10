@@ -12,6 +12,7 @@ namespace SistemaTecnico.Services
         private readonly IClienteRepository _clienteRepository;
         private readonly IEstadoRepository _estadoRepository;
         private readonly ITareaRepository _tareaRepository;
+        private readonly ITrabajoImagenComparacionRepository _trabajoImagenComparacionRepository;
         private readonly IWebHostEnvironment _environment;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IEmailService _emailService;
@@ -22,6 +23,7 @@ namespace SistemaTecnico.Services
             IClienteRepository clienteRepository,
             IEstadoRepository estadoRepository,
             ITareaRepository tareaRepository,
+            ITrabajoImagenComparacionRepository trabajoImagenComparacionRepository,
             IWebHostEnvironment environment,
             IHttpContextAccessor httpContextAccessor,
             IEmailService emailService)
@@ -31,6 +33,7 @@ namespace SistemaTecnico.Services
             _clienteRepository = clienteRepository;
             _estadoRepository = estadoRepository;
             _tareaRepository = tareaRepository;
+            _trabajoImagenComparacionRepository = trabajoImagenComparacionRepository;
             _environment = environment;
             _httpContextAccessor = httpContextAccessor;
             _emailService = emailService;
@@ -464,11 +467,6 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        //public async Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
-        //{
-        //    await _trabajoRepository.GuardarTrabajoRealizado(id, dto);
-        //}  
-
         public async Task<bool> IniciarTrabajoAsync(int idTrabajo)
         {
             var (usuarioId, rol) = ObtenerUsuarioActual();
@@ -554,21 +552,38 @@ namespace SistemaTecnico.Services
             trabajo.Estado = estado;
             trabajo.TrabajoRealizado = dto.TrabajoRealizado;
 
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
             //se le avisa a sistemas que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
             if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
             {
-                var html = TrabajoEmailTemplates.TrabajoPendienteAprobacion(trabajo.Id,
-                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
+                var comparaciones = await _trabajoImagenComparacionRepository.ObtenerPorTrabajoAsync(trabajo.Id);
+
+                var imagenes = comparaciones.Select(x => (
+                                Antes: x.ImagenAntes != null
+                                    ? $"https://localhost:7122{x.ImagenAntes.RutaArchivo}"
+                                    : null,
+
+                                Despues: x.ImagenDespues != null
+                                    ? $"https://localhost:7122{x.ImagenDespues.RutaArchivo}"
+                                    : null
+                            ));
+                
+                var html = TrabajoEmailTemplates.TrabajoPendienteAprobacion(trabajo.Tecnico.NombreApellido,
+                                trabajo.Id,
+                                $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
+                                trabajo.Tarea.Descripcion,
+                                trabajo.TrabajoRealizado ?? "",
+                                imagenes
+                            );
 
                 await _emailService.EnviarAsync(
                     trabajo.UsuarioCreacion.Email,
                     $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
                     html);
             }
-
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
 
             return true;
         }

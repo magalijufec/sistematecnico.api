@@ -117,46 +117,108 @@ namespace SistemaTecnico.Services
         // ============================================================
 
         public static string TrabajoPendienteAprobacion(
-            int trabajoId,
-            string cliente,
             string tecnico,
-            string tarea)
+    int idTrabajo,
+    string cliente,
+    string tarea,
+    string trabajoRealizado,
+    IEnumerable<(string? Antes, string? Despues)> comparaciones)
         {
-            return Layout(
-                "Trabajo pendiente de aprobación",
-                $"""
-            <p>
-                Se ha completado un trabajo técnico
-                y está pendiente de aprobación.
-            </p>
+            var imagenesHtml = "";
 
-            <div class="info">
-                <p>
-                    <strong>Trabajo:</strong>
-                    #{trabajoId}
-                </p>
+            foreach (var comparacion in comparaciones)
+            {
+                imagenesHtml += $"""
+            <div style="margin-bottom: 25px;">
 
-                <p>
-                    <strong>Cliente:</strong>
-                    {cliente}
-                </p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
 
-                <p>
-                    <strong>Técnico:</strong>
-                    {tecnico}
-                </p>
+                        <td width="50%" style="text-align:center; vertical-align:top; padding:10px;">
 
-                <p>
-                    <strong>Tarea:</strong>
-                    {tarea}
-                </p>
+                            <strong>Antes</strong>
+                            <br><br>
 
-                <p>
-                    <strong>Estado:</strong>
-                    Trabajado finalizado
-                </p>
+                            {(string.IsNullOrWhiteSpace(comparacion.Antes)
+                                        ? "<p>No hay imagen</p>"
+                                        : $"""
+                                    <img
+                                        src="{comparacion.Antes}"
+                                        alt="Imagen antes"
+                                        style="max-width:100%; border-radius:6px;"
+                                    />
+                                  """)}
+
+                        </td>
+
+
+                        <td width="50%" style="text-align:center; vertical-align:top; padding:10px;">
+
+                            <strong>Después</strong>
+                            <br><br>
+
+                            {(string.IsNullOrWhiteSpace(comparacion.Despues)
+                                        ? "<p>No hay imagen</p>"
+                                        : $"""
+                                    <img
+                                        src="{comparacion.Despues}"
+                                        alt="Imagen después"
+                                        style="max-width:100%; border-radius:6px;"
+                                    />
+                                  """)}
+
+                        </td>
+
+                    </tr>
+                </table>
+
             </div>
-            """
+            """;
+            }
+
+            var contenido = $"""
+        <p>
+            Hola,
+        </p>
+
+        <p>
+            El técnico <strong>{tecnico}</strong> ha finalizado el trabajo.
+        </p>
+
+        <p>
+            <strong>Cliente:</strong>
+            {cliente}
+        </p>
+
+        <p>
+            <strong>Tarea:</strong>
+            {tarea}
+        </p>
+
+        <h3>Trabajo realizado</h3>
+
+        <div style="
+            background:#f5f5f5;
+            padding:15px;
+            border-left:4px solid #1976d2;
+            margin:15px 0;
+        ">
+            {trabajoRealizado}
+        </div>
+
+        <h3>Imágenes del trabajo</h3>
+
+        {imagenesHtml}
+
+        <p>
+            Ingresá al Sistema Técnico para revisar el trabajo y
+            aprobarlo o solicitar una mejora.
+        </p>
+        """;
+
+            return Layout(
+                "Trabajo terminado",
+                contenido
             );
         }
 

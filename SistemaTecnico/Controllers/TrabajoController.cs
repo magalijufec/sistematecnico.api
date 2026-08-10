@@ -227,7 +227,7 @@ public class TrabajoController : ControllerBase
 
             return Ok(new
             {
-                mensaje = "Trabajo enviado a aprobación."
+                mensaje = "Trabajo enviado a revisión."
             });
         }
         catch (UnauthorizedAccessException)
