@@ -200,41 +200,22 @@ namespace SistemaTecnico.Services
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
-
                     FechaSolicitud = t.FechaSolicitud,
-
                     FechaInicio = t.FechaInicio,
-
                     FechaFinalizado = t.FechaFinalizado,
-
-                    FechaPagado = t.FechaPagado,
-
                     IdCliente = t.Cliente.Id,
-
                     Cliente =
                         t.Cliente.NroCliente +
                         " - " +
                         t.Cliente.Nombre,
-
                     IdTecnico = t.Tecnico.Id,
-
-                    Tecnico =
-                        t.Tecnico.NombreApellido,
-
+                    Tecnico = t.Tecnico.NombreApellido,
                     IdTarea = t.Tarea.Id,
-
-                    Tarea =
-                        t.Tarea.Descripcion,
-
-                    TrabajoRealizado =
-                        t.TrabajoRealizado,
-
-                    Provincia =
-                        t.Cliente.Provincia.Nombre,
-
-                    Ciudad =
-                        t.Cliente.Ciudad.Nombre
-
+                    Tarea = t.Tarea.Descripcion,
+                    TrabajoRealizado = t.TrabajoRealizado,
+                    Provincia = t.Cliente.Provincia.Nombre,
+                    Ciudad = t.Cliente.Ciudad.Nombre,
+                    Factura = t.Factura
                 })
                 .OrderByDescending(
                     t => t.FechaFinalizado
@@ -257,7 +238,6 @@ namespace SistemaTecnico.Services
                     FechaInicio = t.FechaInicio,
 
                     FechaFinalizado = t.FechaFinalizado,
-
                     FechaPagado = t.FechaPagado,
 
                     IdCliente = t.Cliente.Id,
@@ -635,13 +615,11 @@ namespace SistemaTecnico.Services
 
         public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
         {
-            await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
-
             var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
 
-            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendientePago);
-
             var usuarioPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
+
+            await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
 
             foreach (var user in usuarioPagos)
             {
@@ -651,16 +629,11 @@ namespace SistemaTecnico.Services
                         $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
 
                     await _emailService.EnviarAsync(
-                        trabajo.Tecnico.Email,
+                        user.Email,
                         $"Factura pendiente de pago #{trabajo.Id}",
                         html);
                 }
             }
-
-
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
 
         }
 

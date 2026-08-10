@@ -118,14 +118,7 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
-    //[Authorize(Roles = "Administrador,Tecnico")]
-    //[HttpPut("{id}/trabajo-realizado")]
-    //public async Task<IActionResult> GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto)
-    //{
-    //    await _trabajoService.GuardarTrabajoRealizado(id, dto);
-    //    return NoContent();
-    //}
-
+    
     [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPost("{id}/factura")]
     public async Task<IActionResult> SubirFactura(int id, IFormFile archivo)

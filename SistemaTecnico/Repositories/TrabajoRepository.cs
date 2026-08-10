@@ -239,6 +239,8 @@ public class TrabajoRepository : ITrabajoRepository
             $"{idTrabajo}/" +
             $"{nombreArchivo}";
 
+        trabajo.EstadoId = EstadosTrabajo.PendientePago;
+
         await _context.SaveChangesAsync();
     }
 }
