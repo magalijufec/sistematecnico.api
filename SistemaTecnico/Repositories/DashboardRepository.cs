@@ -30,6 +30,12 @@ namespace SistemaTecnico.Repositories
                 EnProceso = _context.Trabajos
                     .Count(x => x.Estado.Id == EstadosTrabajo.EnProceso),
 
+                TrabajosFinalizados = _context.Trabajos
+                    .Count(x => x.Estado.Id == EstadosTrabajo.TrabajoFinalizado),
+
+                Aprobados = _context.Trabajos
+                    .Count(x => x.Estado.Id == EstadosTrabajo.Aprobado),
+
                 PendientePago = _context.Trabajos
                     .Count(x => x.Estado.Id == EstadosTrabajo.PendientePago),
 

@@ -5,8 +5,10 @@
         public int Pendientes { get; set; }
 
         public int EnProceso { get; set; }
+        public int TrabajosFinalizados { get; set; }
 
         public int PendientePago { get; set; }
+        public int Aprobados { get; set; }
 
         public int Finalizados { get; set; }
 
