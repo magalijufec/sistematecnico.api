@@ -16,6 +16,7 @@ namespace SistemaTecnico.Services
         private readonly IWebHostEnvironment _environment;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IEmailService _emailService;
+        private readonly IImagenService _imagenService;
 
         public TrabajoService(
             ITrabajoRepository trabajoRepository,
@@ -26,7 +27,8 @@ namespace SistemaTecnico.Services
             ITrabajoImagenComparacionRepository trabajoImagenComparacionRepository,
             IWebHostEnvironment environment,
             IHttpContextAccessor httpContextAccessor,
-            IEmailService emailService)
+            IEmailService emailService,
+            IImagenService imagenService)
         {
             _trabajoRepository = trabajoRepository;
             _usuarioRepository = usuarioRepository;
@@ -37,6 +39,7 @@ namespace SistemaTecnico.Services
             _environment = environment;
             _httpContextAccessor = httpContextAccessor;
             _emailService = emailService;
+            _imagenService = imagenService;
         }
 
         private int ObtenerUsuarioIdActual()
@@ -131,7 +134,7 @@ namespace SistemaTecnico.Services
 
                     TieneFactura = !string.IsNullOrEmpty(t.Factura),
 
-                    CantidadImagenes = t.Imagenes.Count
+                    //CantidadImagenes = t.Imagenes.Count
 
                 })
                 .OrderByDescending(t => t.FechaSolicitud);
@@ -360,8 +363,8 @@ namespace SistemaTecnico.Services
                 Factura =
                     t.Factura,
 
-                CantidadImagenes =
-                    t.Imagenes.Count,
+                //CantidadImagenes =
+                //    t.Imagenes.Count,
 
                 Solicitante = t.UsuarioCreacion?.NombreApellido
             };
@@ -369,8 +372,15 @@ namespace SistemaTecnico.Services
 
         public async Task<TrabajoResponseDto> CrearAsync(TrabajoCreateDto dto)
         {
-            if (!await _usuarioRepository.ExisteAsync(dto.IdTecnico))
-                throw new Exception("El técnico no existe.");
+            var tecnicoExiste = await _usuarioRepository.ExisteAsync(dto.IdTecnico);
+
+            Console.WriteLine($"ID TECNICO RECIBIDO: {dto.IdTecnico}");
+            Console.WriteLine($"TECNICO EXISTE: {tecnicoExiste}");
+
+            if (!tecnicoExiste)
+                throw new Exception($"El técnico con ID {dto.IdTecnico} no existe.");
+            //if (!await _usuarioRepository.ExisteAsync(dto.IdTecnico))
+            //    throw new Exception("El técnico no existe.");
 
             if (!await _clienteRepository.ExisteAsync(dto.IdCliente))
                 throw new Exception("El cliente no existe.");
@@ -395,6 +405,15 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.AgregarAsync(trabajo);
             await _trabajoRepository.GuardarCambiosAsync();
+
+            if (dto.Archivos != null && dto.Archivos.Count > 0)
+            {
+                await _imagenService.SubirImagenes(
+                    trabajo.Id,
+                    true,
+                    dto.Archivos
+        );
+            }
 
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico?.Email))
             {

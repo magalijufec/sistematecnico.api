@@ -9,5 +9,6 @@
         public int IdTarea { get; set; }
 
         public string? Comentarios { get; set; }
+        public List<IFormFile>? Archivos { get; set; }
     }
 }

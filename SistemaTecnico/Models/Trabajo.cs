@@ -25,8 +25,8 @@
         public string? TrabajoRealizado { get; set; }
         public string? Factura { get; set; }
         public DateTime? FechaPagado { get; set; }
-        public IList<Imagen> Imagenes { get; set; } = new List<Imagen>();
-        public ICollection<TrabajoImagenComparacion> ComparacionesImagenes { get; set; }
-            = new List<TrabajoImagenComparacion>();
+        //public IList<Imagen> Imagenes { get; set; } = new List<Imagen>();
+        public ICollection<TrabajoImagenComparacion> ComparacionesImagenes { get; set; } = new List<TrabajoImagenComparacion>();
+        public IList<Imagen> SolicitudImagenes { get; set; } = new List<Imagen>();
     }
 }

@@ -14,53 +14,53 @@ namespace SistemaTecnico.Controllers
             _service = service;
         }
 
-        [HttpPost("{id}/imagenes")]
-        [RequestSizeLimit(50_000_000)]
-        public async Task<IActionResult> SubirImagenes(
-        int id,
-        [FromForm] bool antes,
-        [FromForm] List<IFormFile> archivos)
-        {
-            try
-            {
-                await _service.SubirImagenes(
-                    id,
-                    antes,
-                    archivos
-                );
+        //[HttpPost("{id}/imagenes")]
+        //[RequestSizeLimit(50_000_000)]
+        //public async Task<IActionResult> SubirImagenes(
+        //int id,
+        //[FromForm] bool antes,
+        //[FromForm] List<IFormFile> archivos)
+        //{
+        //    try
+        //    {
+        //        await _service.SubirImagenes(
+        //            id,
+        //            antes,
+        //            archivos
+        //        );
 
-                return Ok(new
-                {
-                    mensaje = "Imágenes cargadas correctamente."
-                });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new
-                {
-                    mensaje = ex.Message
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new
-                {
-                    mensaje = ex.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(
-                    500,
-                    new
-                    {
-                        mensaje =
-                            "Error al guardar las imágenes.",
-                        detalle = ex.Message
-                    }
-                );
-            }
-        }
+        //        return Ok(new
+        //        {
+        //            mensaje = "Imágenes cargadas correctamente."
+        //        });
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        return NotFound(new
+        //        {
+        //            mensaje = ex.Message
+        //        });
+        //    }
+        //    catch (ArgumentException ex)
+        //    {
+        //        return BadRequest(new
+        //        {
+        //            mensaje = ex.Message
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(
+        //            500,
+        //            new
+        //            {
+        //                mensaje =
+        //                    "Error al guardar las imágenes.",
+        //                detalle = ex.Message
+        //            }
+        //        );
+        //    }
+        //}
 
 
         [HttpGet("{id}/imagenes")]

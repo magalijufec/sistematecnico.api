@@ -58,7 +58,7 @@ public class TrabajoController : ControllerBase
 
     [Authorize(Roles = "Administrador,Sistemas")]
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] TrabajoCreateDto dto)
+    public async Task<IActionResult> Post([FromForm] TrabajoCreateDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);

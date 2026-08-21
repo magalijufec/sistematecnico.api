@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SistemaTecnico.Data;
+using SistemaTecnico.Middleware;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 using SistemaTecnico.Services;
@@ -15,16 +16,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("Angular",
+//        policy =>
+//        {
+//            policy
+//                .WithOrigins("http://localhost:4200")
+//                .AllowAnyHeader()
+//                .AllowAnyMethod();
+//        });
+//});
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Angular",
-        policy =>
-        {
-            policy
-                .WithOrigins("http://localhost:4200")
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
+    options.AddPolicy("Angular", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://localhost:4200",
+                "http://localhost",
+                "http://192.168.0.143"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 
 builder.Services.AddControllers();
@@ -64,6 +80,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITrabajoImagenComparacionRepository, TrabajoImagenComparacionRepository>();
 builder.Services.AddScoped<ITrabajoImagenComparacionService, TrabajoImagenComparacionService>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+builder.Services.AddScoped<IErrorLogRepository, ErrorLogRepository>();
 
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings")
@@ -104,11 +121,11 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
+//if (app.Environment.IsDevelopment())
+//{
+app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 app.UseHttpsRedirection();
 
@@ -118,6 +135,8 @@ app.UseCors("Angular");
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.MapControllers();
 
