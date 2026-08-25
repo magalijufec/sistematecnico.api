@@ -72,11 +72,12 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Estado)
             .Include(t => t.Cliente.Provincia)
             .Include(t => t.Cliente.Ciudad)
-            //.Include(t => t.Imagenes)
+            .Include(t => t.ComparacionesImagenes)
             .Include(t => t.SolicitudImagenes)
             .Include(t => t.Tarea)
             .Include(t => t.UsuarioCreacion)
             .AsNoTracking()
+            .AsSplitQuery()
             .FirstOrDefaultAsync(t => t.Id == id);
     }    
 

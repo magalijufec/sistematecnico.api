@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using QuestPDF.Fluent;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
@@ -193,7 +194,7 @@ namespace SistemaTecnico.Services
             return Enumerable.Empty<Trabajo>();
         }
 
-        public async Task<IEnumerable<TrabajoFinalizadoDTO>>ObtenerTrabajosPendientesPagoAsync()
+        public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPendientesPagoAsync()
         {
             var trabajos =
                 await ObtenerTrabajosSegunUsuarioAsync();
@@ -390,7 +391,7 @@ namespace SistemaTecnico.Services
                                         .User
                                         .FindFirst(ClaimTypes.NameIdentifier)!
                                         .Value
-                                );            
+                                );
 
             var trabajo = new Trabajo
             {
@@ -571,7 +572,7 @@ namespace SistemaTecnico.Services
                                     ? $"https://localhost:7122{x.ImagenDespues.RutaArchivo}"
                                     : null
                             ));
-                
+
                 var html = TrabajoEmailTemplates.TrabajoPendienteAprobacion(trabajo.Tecnico.NombreApellido,
                                 trabajo.Id,
                                 $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
@@ -619,7 +620,7 @@ namespace SistemaTecnico.Services
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
             {
                 var html = TrabajoEmailTemplates.TrabajoAprobado(trabajo.Tecnico.NombreApellido, trabajo.Id,
-                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}",  trabajo.Tarea.Descripcion);
+                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tarea.Descripcion);
 
                 await _emailService.EnviarAsync(
                     trabajo.Tecnico?.Email,
@@ -679,7 +680,7 @@ namespace SistemaTecnico.Services
             if (trabajo.Estado.Id != 5)
                 throw new InvalidOperationException(
                     "El trabajo debe estar pendiente de pago."
-                );            
+                );
 
             trabajo.FechaPagado = DateTime.Now;
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Finalizado);
@@ -691,7 +692,7 @@ namespace SistemaTecnico.Services
 
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
             {
-                var html = TrabajoEmailTemplates.TrabajoFinalizado(trabajo.Id, 
+                var html = TrabajoEmailTemplates.TrabajoFinalizado(trabajo.Id,
                     $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
 
                 await _emailService.EnviarAsync(
@@ -761,6 +762,509 @@ namespace SistemaTecnico.Services
             }
 
             return true;
+        }
+
+        private string ObtenerRutaFisicaImagen(string rutaArchivo)
+        {
+            if (string.IsNullOrWhiteSpace(rutaArchivo))
+                return string.Empty;
+
+            var ruta = rutaArchivo
+                .Replace("/", Path.DirectorySeparatorChar.ToString())
+                .TrimStart(
+                    '/',
+                    '\\'
+                );
+
+            return Path.Combine(
+                _environment.WebRootPath,
+                ruta
+            );
+        }
+
+        public async Task<byte[]> GenerarInformePdfAsync(int id)
+        {
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(id);
+
+            if (trabajo == null)
+                throw new KeyNotFoundException($"No existe el trabajo #{id}.");
+
+            if (trabajo.Estado == null ||
+                trabajo.Estado.Id < EstadosTrabajo.TrabajoFinalizado)
+            {
+                throw new InvalidOperationException(
+                    "El informe PDF solamente está disponible cuando el trabajo está finalizado."
+                );
+            }
+
+            var usuarioActual = ObtenerUsuarioActual();
+
+            var puedeVerTodos =
+                usuarioActual.Rol == "Administrador" ||
+                usuarioActual.Rol == "Sistemas" ||
+                usuarioActual.Rol == "Pagos";
+
+            if (!puedeVerTodos)
+            {
+                if (usuarioActual.Rol == "Tecnico" &&
+                    trabajo.Tecnico?.Id != usuarioActual.UsuarioId)
+                {
+                    throw new UnauthorizedAccessException(
+                        "No tiene permiso para consultar este trabajo."
+                    );
+                }
+
+                if (usuarioActual.Rol == "Farmacia")
+                {
+                    var usuario = await _usuarioRepository
+                        .ObtenerPorIdAsync(usuarioActual.UsuarioId);
+
+                    if (usuario?.Cliente?.Id == null ||
+                        trabajo.Cliente?.Id != usuario.Cliente.Id)
+                    {
+                        throw new UnauthorizedAccessException(
+                            "No tiene permiso para consultar este trabajo."
+                        );
+                    }
+                }
+            }
+
+            // Todas las imágenes del trabajo.
+            var todasLasImagenes =
+                (await _imagenService.ObtenerPorTrabajo(id))?
+                    .Where(imagen =>
+                        imagen != null &&
+                        !string.IsNullOrWhiteSpace(imagen.RutaArchivo))
+                    .OrderBy(imagen => imagen.Id)
+                    .ToList()
+                ?? new List<Imagen>();
+
+            // Comparaciones registradas para el trabajo.
+            var comparaciones =
+                (await _trabajoImagenComparacionRepository
+                    .ObtenerPorTrabajoAsync(id))?
+                    .Where(comparacion =>
+                        comparacion.ImagenAntesId.HasValue ||
+                        comparacion.ImagenDespuesId.HasValue)
+                    .OrderBy(comparacion => comparacion.Id)
+                    .ToList()
+                ?? new List<TrabajoImagenComparacion>();
+
+            // Índice para resolver Antes/Después aunque las navegaciones EF no estén cargadas.
+            var imagenesPorId = todasLasImagenes
+                .GroupBy(imagen => imagen.Id)
+                .ToDictionary(
+                    grupo => grupo.Key,
+                    grupo => grupo.First()
+                );
+
+            var idsImagenesComparacion = comparaciones
+                .SelectMany(comparacion => new int?[]
+                {
+                    comparacion.ImagenAntesId,
+                    comparacion.ImagenDespuesId
+                })
+                .Where(idImagen => idImagen.HasValue)
+                .Select(idImagen => idImagen!.Value)
+                .ToHashSet();
+
+            // Solo imágenes que no están utilizadas como Antes/Después.
+            var imagenesSolicitud = todasLasImagenes
+                .Where(imagen => !idsImagenesComparacion.Contains(imagen.Id))
+                .OrderBy(imagen => imagen.Id)
+                .ToList();
+
+            using var stream = new MemoryStream();
+
+            var document = QuestPDF.Fluent.Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(QuestPDF.Helpers.PageSizes.A4);
+                    page.Margin(35);
+                    page.DefaultTextStyle(style => style.FontSize(10));
+
+                    page.Header().Element(header =>
+                    {
+                        header.Column(column =>
+                        {
+                            column.Item()
+                                .Text($"INFORME DE TRABAJO #{trabajo.Id}")
+                                .FontSize(20)
+                                .Bold();
+
+                            column.Item()
+                                .Text("Sistema Técnico")
+                                .FontSize(11);
+
+                            column.Item()
+                                .PaddingTop(5)
+                                .LineHorizontal(1);
+                        });
+                    });
+
+                    page.Content()
+                        .PaddingTop(15)
+                        .Column(column =>
+                        {
+                            // 1. INFORMACIÓN GENERAL
+                            column.Item()
+                                .Text("Información del trabajo")
+                                .FontSize(14)
+                                .Bold();
+
+                            column.Item()
+                                .PaddingTop(8)
+                                .Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn();
+                                        columns.RelativeColumn();
+                                    });
+
+                                    FilaPdf(table, "Nº Trabajo", trabajo.Id.ToString());
+                                    FilaPdf(table, "Estado", trabajo.Estado?.Nombre ?? "-");
+                                    FilaPdf(table, "Fecha solicitud",
+                                        trabajo.FechaSolicitud.ToString("dd/MM/yyyy HH:mm"));
+                                    FilaPdf(table, "Fecha inicio",
+                                        trabajo.FechaInicio?.ToString("dd/MM/yyyy HH:mm") ?? "-");
+                                    FilaPdf(table, "Fecha finalización",
+                                        trabajo.FechaFinalizado?.ToString("dd/MM/yyyy HH:mm") ?? "-");
+                                    FilaPdf(table, "Fecha pago",
+                                        trabajo.FechaPagado?.ToString("dd/MM/yyyy HH:mm") ?? "-");
+                                });
+
+                            // 2. DATOS DE LA SOLICITUD
+                            column.Item()
+                                .PaddingTop(20)
+                                .Text("Solicitud")
+                                .FontSize(14)
+                                .Bold();
+
+                            column.Item()
+                                .PaddingTop(8)
+                                .Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn();
+                                        columns.RelativeColumn();
+                                    });
+
+                                    FilaPdf(table, "Solicitante",
+                                        trabajo.UsuarioCreacion?.NombreApellido ?? "-");
+                                    FilaPdf(table, "Técnico",
+                                        trabajo.Tecnico?.NombreApellido ?? "-");
+                                    FilaPdf(table, "Cliente",
+                                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}");
+                                    FilaPdf(table, "Dirección",
+                                        trabajo.Cliente?.Direccion ?? "-");
+                                    FilaPdf(table, "Provincia",
+                                        trabajo.Cliente?.Provincia?.Nombre ?? "-");
+                                    FilaPdf(table, "Ciudad",
+                                        trabajo.Cliente?.Ciudad?.Nombre ?? "-");
+                                    FilaPdf(table, "Tarea",
+                                        trabajo.Tarea?.Descripcion ?? "-");
+                                });
+
+                            // 3. IMÁGENES DE LA SOLICITUD
+                            if (imagenesSolicitud.Count > 0)
+                            {
+                                column.Item()
+                                    .PaddingTop(20)
+                                    .Text("Imágenes de la solicitud")
+                                    .FontSize(14)
+                                    .Bold();
+
+                                foreach (var grupo in imagenesSolicitud.Chunk(2))
+                                {
+                                    column.Item()
+                                        .PaddingTop(10)
+                                        .Row(row =>
+                                        {
+                                            for (var indice = 0;
+                                                 indice < grupo.Length;
+                                                 indice++)
+                                            {
+                                                var imagen = grupo[indice];
+                                                var item = row.RelativeItem();
+
+                                                item = indice == 0
+                                                    ? item.PaddingRight(5)
+                                                    : item.PaddingLeft(5);
+
+                                                item.Element(contenedor =>
+                                                    DibujarImagenSolicitud(
+                                                        contenedor,
+                                                        imagen));
+                                            }
+
+                                            if (grupo.Length == 1)
+                                                row.RelativeItem().PaddingLeft(5);
+                                        });
+                                }
+                            }
+
+                            // 4. COMENTARIOS DE LA SOLICITUD
+                            column.Item()
+                                .PaddingTop(20)
+                                .Text("Comentarios de la solicitud")
+                                .FontSize(14)
+                                .Bold();
+
+                            column.Item()
+                                .PaddingTop(5)
+                                .Border(1)
+                                .BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten1)
+                                .Padding(10)
+                                .Text(string.IsNullOrWhiteSpace(trabajo.Comentarios)
+                                    ? "Sin comentarios"
+                                    : trabajo.Comentarios);
+
+                            // 5. TRABAJO REALIZADO
+                            column.Item()
+                                .PaddingTop(25)
+                                .Text("Trabajo realizado")
+                                .FontSize(14)
+                                .Bold();
+
+                            column.Item()
+                                .PaddingTop(5)
+                                .Border(1)
+                                .BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten1)
+                                .Padding(10)
+                                .Text(string.IsNullOrWhiteSpace(trabajo.TrabajoRealizado)
+                                    ? "Sin detalle del trabajo realizado"
+                                    : trabajo.TrabajoRealizado);
+
+                            // 6. COMPARACIONES ANTES / DESPUÉS
+                            if (comparaciones.Count > 0)
+                            {
+                                column.Item()
+                                    .PaddingTop(20)
+                                    .Text("Imágenes del trabajo realizado")
+                                    .FontSize(14)
+                                    .Bold();
+
+                                var numeroComparacion = 1;
+
+                                foreach (var comparacion in comparaciones)
+                                {
+                                    var numeroActual = numeroComparacion++;
+
+                                    Imagen? imagenAntes = null;
+                                    Imagen? imagenDespues = null;
+
+                                    if (comparacion.ImagenAntesId.HasValue)
+                                    {
+                                        imagenesPorId.TryGetValue(
+                                            comparacion.ImagenAntesId.Value,
+                                            out imagenAntes);
+                                    }
+
+                                    if (comparacion.ImagenDespuesId.HasValue)
+                                    {
+                                        imagenesPorId.TryGetValue(
+                                            comparacion.ImagenDespuesId.Value,
+                                            out imagenDespues);
+                                    }
+
+                                    column.Item()
+                                        .PaddingTop(12)
+                                        .Border(1)
+                                        .BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten1)
+                                        .Padding(10)
+                                        .Column(comparacionColumn =>
+                                        {
+                                            comparacionColumn.Item()
+                                                .Text($"Comparación #{numeroActual}")
+                                                .FontSize(11)
+                                                .Bold();
+
+                                            comparacionColumn.Item()
+                                                .PaddingTop(8)
+                                                .Row(row =>
+                                                {
+                                                    row.RelativeItem()
+                                                        .PaddingRight(5)
+                                                        .Element(contenedor =>
+                                                            DibujarImagenComparacion(
+                                                                contenedor,
+                                                                "Antes",
+                                                                imagenAntes));
+
+                                                    row.RelativeItem()
+                                                        .PaddingLeft(5)
+                                                        .Element(contenedor =>
+                                                            DibujarImagenComparacion(
+                                                                contenedor,
+                                                                "Después",
+                                                                imagenDespues));
+                                                });
+                                        });
+                                }
+                            }
+                        });
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text(text =>
+                        {
+                            text.Span("Sistema Técnico - ");
+                            text.CurrentPageNumber();
+                            text.Span(" / ");
+                            text.TotalPages();
+                        });
+                });
+            });
+
+            document.GeneratePdf(stream);
+            return stream.ToArray();
+        }
+
+        private void DibujarImagenSolicitud(
+                    QuestPDF.Infrastructure.IContainer container,
+                    Imagen imagen)
+        {
+            container
+                .Border(1)
+                .BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten1)
+                .Padding(8)
+                .Column(column =>
+                {
+                    var resultadoImagen = ObtenerBytesImagen(imagen.RutaArchivo);
+
+                    if (resultadoImagen.Bytes == null)
+                    {
+                        DibujarImagenNoDisponible(
+                            column,
+                            resultadoImagen.Mensaje);
+                        return;
+                    }
+
+                    column.Item()
+                        .Height(210)
+                        .AlignCenter()
+                        .AlignMiddle()
+                        .Image(resultadoImagen.Bytes)
+                        .FitArea();
+                });
+        }
+        private (byte[]? Bytes, string Mensaje) ObtenerBytesImagen(string? rutaArchivo)
+        {
+            if (string.IsNullOrWhiteSpace(rutaArchivo))
+            {
+                return (
+                    null,
+                    "Sin imagen"
+                );
+            }
+
+            var rutaFisica =
+                ObtenerRutaFisicaImagen(
+                    rutaArchivo
+                );
+
+            if (
+                string.IsNullOrWhiteSpace(rutaFisica) ||
+                !System.IO.File.Exists(rutaFisica)
+            )
+            {
+                return (
+                    null,
+                    "Archivo no encontrado"
+                );
+            }
+
+            try
+            {
+                return (
+                    System.IO.File.ReadAllBytes(
+                        rutaFisica
+                    ),
+                    string.Empty
+                );
+            }
+            catch
+            {
+                return (
+                    null,
+                    "Error al leer imagen"
+                );
+            }
+        }
+
+        private static void DibujarImagenNoDisponible(
+                    QuestPDF.Fluent.ColumnDescriptor column,
+                    string mensaje)
+        {
+            column.Item()
+                .Height(210)
+                .Background(QuestPDF.Helpers.Colors.Grey.Lighten3)
+                .AlignCenter()
+                .AlignMiddle()
+                .Text(mensaje)
+                .FontSize(9)
+                .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+        }
+        private void DibujarImagenComparacion(
+                    QuestPDF.Infrastructure.IContainer container,
+                    string titulo,
+                    Imagen? imagen)
+        {
+            container
+                .Border(1)
+                .BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten2)
+                .Padding(8)
+                .Column(column =>
+                {
+                    column.Item()
+                        .AlignCenter()
+                        .Text(titulo)
+                        .FontSize(11)
+                        .Bold();
+
+                    if (imagen == null)
+                    {
+                        DibujarImagenNoDisponible(column, "Sin imagen");
+                        return;
+                    }
+
+                    var resultadoImagen = ObtenerBytesImagen(imagen.RutaArchivo);
+
+                    if (resultadoImagen.Bytes == null)
+                    {
+                        DibujarImagenNoDisponible(
+                            column,
+                            resultadoImagen.Mensaje);
+                        return;
+                    }
+
+                    column.Item()
+                        .PaddingTop(8)
+                        .Height(210)
+                        .AlignCenter()
+                        .AlignMiddle()
+                        .Image(resultadoImagen.Bytes)
+                        .FitArea();
+                });
+        }
+        private static void FilaPdf(
+            QuestPDF.Fluent.TableDescriptor table,
+            string titulo,
+            string? valor)
+        {
+            table.Cell()
+                .BorderBottom(1)
+                .Padding(5)
+                .Text(titulo)
+                .Bold();
+
+            table.Cell()
+                .BorderBottom(1)
+                .Padding(5)
+                .Text(string.IsNullOrWhiteSpace(valor) ? "-" : valor);
         }
     }
 }

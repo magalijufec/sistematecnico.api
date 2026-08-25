@@ -8,6 +8,9 @@ using SistemaTecnico.Middleware;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 using SistemaTecnico.Services;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

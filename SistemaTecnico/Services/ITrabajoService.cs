@@ -17,5 +17,6 @@ namespace SistemaTecnico.Services
         Task<bool> AprobarTrabajoAsync(int idTrabajo);
         Task<bool> RegistrarPagoAsync(int idTrabajo);
         Task<bool> SolicitarMejoraAsync(int id, SolicitarMejoraDTO dto);
+        Task<byte[]> GenerarInformePdfAsync(int id);
     }
 }

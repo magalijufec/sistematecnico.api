@@ -268,9 +268,7 @@ public class TrabajoController : ControllerBase
 
     [HttpPut("{id}/solicitar-mejora")]
     [Authorize(Roles = "Sistemas")]
-    public async Task<IActionResult> SolicitarMejora(
-    int id,
-    SolicitarMejoraDTO dto)
+    public async Task<IActionResult> SolicitarMejora(int id,SolicitarMejoraDTO dto)
     {
         try
         {
@@ -291,6 +289,39 @@ public class TrabajoController : ControllerBase
             {
                 mensaje = ex.Message
             });
+        }
+    }
+
+    [HttpGet("{id}/informe-pdf")]
+    public async Task<IActionResult> GenerarInformePdf(int id)
+    {
+        try
+        {
+            var pdf = await _trabajoService.GenerarInformePdfAsync(id);
+
+            return File(
+                pdf,
+                "application/pdf",
+                $"Informe-Trabajo-{id}.pdf"
+            );
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                mensaje = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid();
         }
     }
 }
