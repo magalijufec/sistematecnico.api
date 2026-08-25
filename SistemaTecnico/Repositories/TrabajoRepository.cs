@@ -137,7 +137,7 @@ public class TrabajoRepository : ITrabajoRepository
             throw new KeyNotFoundException(
                 $"No existe el trabajo con ID {idTrabajo}");
 
-        trabajo.FechaPagado = DateTime.Now;
+        trabajo.FechaPagado = DateTime.UtcNow;
         var estado = await _context.EstadosTrabajo.FindAsync(4); // Finalizado
         trabajo.Estado = estado;
 
@@ -207,7 +207,7 @@ public class TrabajoRepository : ITrabajoRepository
 
         // Nombre nuevo
         string nombreArchivo =
-            $"factura{DateTime.Now:yyMMddHHmmss}{extension}";
+            $"factura{DateTime.UtcNow:yyMMddHHmmss}{extension}";
 
         string rutaFisica =
             Path.Combine(

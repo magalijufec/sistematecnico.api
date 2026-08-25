@@ -395,7 +395,7 @@ namespace SistemaTecnico.Services
 
             var trabajo = new Trabajo
             {
-                FechaSolicitud = DateTime.Now,
+                FechaSolicitud = DateTime.UtcNow,
                 Tecnico = await _usuarioRepository.ObtenerPorIdActivoAsync(dto.IdTecnico),
                 Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente),
                 Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea),
@@ -493,7 +493,7 @@ namespace SistemaTecnico.Services
                     "El trabajo no se encuentra en estado Pendiente."
                 );
 
-            trabajo.FechaInicio = DateTime.Now;
+            trabajo.FechaInicio = DateTime.UtcNow;
 
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.EnProceso);
             trabajo.Estado = estado;
@@ -553,6 +553,7 @@ namespace SistemaTecnico.Services
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.TrabajoFinalizado);
             trabajo.Estado = estado;
             trabajo.TrabajoRealizado = dto.TrabajoRealizado;
+            trabajo.FechaFinalizado = DateTime.UtcNow;
 
             await _trabajoRepository.ActualizarAsync(trabajo);
 
@@ -612,7 +613,7 @@ namespace SistemaTecnico.Services
                     "El trabajo debe estar en estado Trabajo finalizado."
                 );
 
-            trabajo.FechaFinalizado = DateTime.Now;
+            trabajo.FechaFinalizado = DateTime.UtcNow;
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Aprobado);
             trabajo.Estado = estado;
 
@@ -682,7 +683,7 @@ namespace SistemaTecnico.Services
                     "El trabajo debe estar pendiente de pago."
                 );
 
-            trabajo.FechaPagado = DateTime.Now;
+            trabajo.FechaPagado = DateTime.UtcNow;
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Finalizado);
             trabajo.Estado = estado;
 

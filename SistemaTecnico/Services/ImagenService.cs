@@ -77,7 +77,7 @@ namespace SistemaTecnico.Services
                     continue;
 
                 string extension = Path.GetExtension(archivo.FileName);
-                string nombreArchivo = $"{DateTime.Now:yyMMdd_HHmmss}{extension}";
+                string nombreArchivo = $"{DateTime.UtcNow:yyMMdd_HHmmss}{extension}";
 
                 string rutaFisica =
                     Path.Combine(
@@ -100,7 +100,7 @@ namespace SistemaTecnico.Services
                     Extension = extension,
                     Tipo = archivo.ContentType,
                     Tamanio = archivo.Length,
-                    FechaCarga = DateTime.Now,
+                    FechaCarga = DateTime.UtcNow,
                     RutaArchivo =
                         $"/uploads/trabajos/" +
                         $"{idTrabajo}/" +

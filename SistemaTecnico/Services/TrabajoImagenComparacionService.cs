@@ -190,7 +190,7 @@ namespace SistemaTecnico.Services
                     archivo.Length,
 
                 FechaCarga =
-                    DateTime.Now,
+                    DateTime.UtcNow,
 
                 RutaArchivo =
                     $"/uploads/trabajos/" +

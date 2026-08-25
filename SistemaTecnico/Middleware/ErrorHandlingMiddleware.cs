@@ -32,7 +32,7 @@ namespace SistemaTecnico.Middleware
 
                     var error = new ErrorLog
                     {
-                        Fecha = DateTime.Now,
+                        Fecha = DateTime.UtcNow,
 
                         Mensaje = ex.Message,
 
