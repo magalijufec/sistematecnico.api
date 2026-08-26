@@ -292,8 +292,7 @@ namespace SistemaTecnico.Services
 
             // Administrador y Sistemas
             // pueden acceder a cualquier trabajo
-            if (rol != "Administrador" &&
-                rol != "Sistemas")
+            if (rol != "Administrador" && rol != "Sistemas")
             {
                 // Técnico
                 if (rol == "Tecnico" &&
@@ -317,6 +316,16 @@ namespace SistemaTecnico.Services
                     }
                 }
             }
+
+            var idsComparacion = t.ComparacionesImagenes
+                                    .SelectMany(c => new int?[]
+                                    {
+                                        c.ImagenAntesId,
+                                        c.ImagenDespuesId
+                                    })
+                                    .Where(x => x.HasValue)
+                                    .Select(x => x!.Value)
+                                    .ToHashSet();
 
             return new TrabajoResponseDto
             {
@@ -364,8 +373,14 @@ namespace SistemaTecnico.Services
                 Factura =
                     t.Factura,
 
-                //CantidadImagenes =
-                //    t.Imagenes.Count,
+                ImagenesSolicitud =
+                    t.SolicitudImagenes
+                        .Where(x => !idsComparacion.Contains(x.Id))
+                        .Select(x => new ImagenDTO
+                        {
+                            Id = x.Id,
+                            RutaArchivo = x.RutaArchivo
+                        }).ToList(),
 
                 Solicitante = t.UsuarioCreacion?.NombreApellido
             };
@@ -375,13 +390,8 @@ namespace SistemaTecnico.Services
         {
             var tecnicoExiste = await _usuarioRepository.ExisteAsync(dto.IdTecnico);
 
-            Console.WriteLine($"ID TECNICO RECIBIDO: {dto.IdTecnico}");
-            Console.WriteLine($"TECNICO EXISTE: {tecnicoExiste}");
-
             if (!tecnicoExiste)
                 throw new Exception($"El técnico con ID {dto.IdTecnico} no existe.");
-            //if (!await _usuarioRepository.ExisteAsync(dto.IdTecnico))
-            //    throw new Exception("El técnico no existe.");
 
             if (!await _clienteRepository.ExisteAsync(dto.IdCliente))
                 throw new Exception("El cliente no existe.");
@@ -409,11 +419,7 @@ namespace SistemaTecnico.Services
 
             if (dto.Archivos != null && dto.Archivos.Count > 0)
             {
-                await _imagenService.SubirImagenes(
-                    trabajo.Id,
-                    true,
-                    dto.Archivos
-        );
+                await _imagenService.SubirImagenes(trabajo.Id, dto.Archivos);
             }
 
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico?.Email))

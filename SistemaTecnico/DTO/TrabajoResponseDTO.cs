@@ -21,7 +21,7 @@
         public string? TrabajoRealizado { get; set; }
         public string? Factura { get; set; }
         public bool TieneFactura { get; set; }
-        //public int CantidadImagenes { get; set; }
         public string Solicitante { get; set; }
+        public List<ImagenDTO> ImagenesSolicitud { get; set; }
     }
 }

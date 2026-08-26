@@ -42,10 +42,7 @@ namespace SistemaTecnico.Services
             return await _imagenRepository.ObtenerPorTrabajoAsync(idTrabajo);
         }
 
-        public async Task SubirImagenes(
-           int idTrabajo,
-           bool antes,
-           List<IFormFile> archivos)
+        public async Task SubirImagenes(int idTrabajo, List<IFormFile> archivos)
         {
             if (archivos == null || archivos.Count == 0)
                 throw new ArgumentException("No se recibieron archivos.");
@@ -56,17 +53,13 @@ namespace SistemaTecnico.Services
                 throw new KeyNotFoundException(
                     $"No existe el trabajo con ID {idTrabajo}");
 
-            string tipoCarpeta = antes
-                ? "antes"
-                : "despues";
-
             string carpeta = Path.Combine(
                 _environment.ContentRootPath,
                 "wwwroot",
                 "uploads",
                 "trabajos",
                 idTrabajo.ToString(),
-                tipoCarpeta
+                "solicitud"
             );
 
             Directory.CreateDirectory(carpeta);
@@ -104,7 +97,7 @@ namespace SistemaTecnico.Services
                     RutaArchivo =
                         $"/uploads/trabajos/" +
                         $"{idTrabajo}/" +
-                        $"{tipoCarpeta}/" +
+                        $"solicitud/" +
                         $"{nombreArchivo}"
                 };
 

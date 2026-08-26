@@ -96,13 +96,13 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
-    [Authorize(Roles = "Administrador,Tecnico")]
-    [HttpPost("{id}/imagenes")]
-    public async Task<IActionResult> SubirImagenes(int id, [FromForm] bool antes, [FromForm] List<IFormFile> archivos)
-    {
-        await _imagenService.SubirImagenes(id, antes, archivos);
-        return Ok();
-    }
+    //[Authorize(Roles = "Administrador,Tecnico")]
+    //[HttpPost("{id}/imagenes")]
+    //public async Task<IActionResult> SubirImagenes(int id, [FromForm] bool antes, [FromForm] List<IFormFile> archivos)
+    //{
+    //    await _imagenService.SubirImagenes(id, antes, archivos);
+    //    return Ok();
+    //}
 
     [HttpGet("{id}/imagenes")]
     public async Task<IActionResult> Obtener(int id)

@@ -9,10 +9,7 @@ namespace SistemaTecnico.Services
 
         Task<List<Imagen>> ObtenerPorTrabajo(int idTrabajo);
 
-        Task SubirImagenes(
-        int idTrabajo,
-        bool antes,
-        List<IFormFile> archivos);
+        Task SubirImagenes(int idTrabajo, List<IFormFile> archivos);
 
         Task EliminarImagenAsync(int idImagen);
     }
