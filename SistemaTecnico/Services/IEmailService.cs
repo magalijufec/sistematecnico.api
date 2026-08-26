@@ -6,13 +6,15 @@
             string destinatario,
             string asunto,
             string cuerpo,
-            bool esHtml = true
+            byte[]? archivoAdjunto = null,
+            bool esHtml = true            
         );
 
         Task EnviarAsync(
             IEnumerable<string> destinatarios,
             string asunto,
             string cuerpo,
+            byte[]? archivoAdjunto,
             bool esHtml = true
         );
     }

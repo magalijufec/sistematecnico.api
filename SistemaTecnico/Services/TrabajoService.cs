@@ -588,10 +588,14 @@ namespace SistemaTecnico.Services
                                 imagenes
                             );
 
+                var pdf = await GenerarInformePdfAsync(trabajo.Id);
+
                 await _emailService.EnviarAsync(
                     trabajo.UsuarioCreacion.Email,
                     $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
-                    html);
+                    html,
+                    pdf
+                );
             }
 
             return true;
@@ -603,21 +607,16 @@ namespace SistemaTecnico.Services
 
             if (rol != "Sistemas" && rol != "Administrador")
             {
-                throw new UnauthorizedAccessException(
-                    "Solo Sistemas o Administrador pueden aprobar el trabajo."
-                );
+                throw new UnauthorizedAccessException("Solo Sistemas o Administrador pueden aprobar el trabajo.");
             }
 
-            var trabajo =
-                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
 
             if (trabajo == null)
                 return false;
 
             if (trabajo.Estado.Id != 3)
-                throw new InvalidOperationException(
-                    "El trabajo debe estar en estado Trabajo finalizado."
-                );
+                throw new InvalidOperationException("El trabajo debe estar en estado Trabajo finalizado.");
 
             trabajo.FechaFinalizado = DateTime.UtcNow;
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Aprobado);
@@ -657,10 +656,13 @@ namespace SistemaTecnico.Services
                     var html = TrabajoEmailTemplates.FacturaPendientePago(trabajo.Id,
                         $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
 
+                    var pdf = await GenerarInformePdfAsync(trabajo.Id);
+
                     await _emailService.EnviarAsync(
                         user.Email,
                         $"Factura pendiente de pago #{trabajo.Id}",
-                        html);
+                        html,
+                        pdf);
                 }
             }
 

@@ -15,12 +15,12 @@ namespace SistemaTecnico.Services
             _settings = options.Value; 
         }
 
-        public async Task EnviarAsync(string destinatario, string asunto, string cuerpo, bool esHtml = true) 
+        public async Task EnviarAsync(string destinatario, string asunto, string cuerpo, byte[]? archivoAdjunto, bool esHtml = true) 
         { 
-            await EnviarAsync(new[] { destinatario }, asunto, cuerpo, esHtml); 
+            await EnviarAsync(new[] { destinatario }, asunto, cuerpo, archivoAdjunto, esHtml); 
         }
 
-        public async Task EnviarAsync(IEnumerable<string> destinatarios, string asunto, string cuerpo, bool esHtml = true)
+        public async Task EnviarAsync(IEnumerable<string> destinatarios, string asunto, string cuerpo, byte[]? archivoAdjunto, bool esHtml = true)
         {
             var message = new MimeMessage(); 
 
@@ -47,6 +47,16 @@ namespace SistemaTecnico.Services
             else { 
                 bodyBuilder.TextBody = cuerpo; 
             } 
+
+            if (archivoAdjunto != null)
+            {
+                bodyBuilder.Attachments.Add(
+                    "Informe-tecnico.pdf",
+                    archivoAdjunto,
+                    ContentType.Parse("application/pdf")
+                    );
+                }
+
             message.Body = bodyBuilder.ToMessageBody(); 
             // SMTP
             using var smtp = new SmtpClient(); 
