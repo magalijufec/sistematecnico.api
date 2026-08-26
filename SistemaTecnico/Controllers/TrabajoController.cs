@@ -148,7 +148,7 @@ public class TrabajoController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Administrador,Pagos")]
+    [Authorize(Roles = "Administrador,Pagos,Farmacia")]
     [HttpPut("{id}/registrar-pago")]
     public async Task<IActionResult> RegistrarPago(int id)
     {

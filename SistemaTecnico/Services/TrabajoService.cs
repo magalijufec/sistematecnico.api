@@ -670,11 +670,10 @@ namespace SistemaTecnico.Services
         {
             var (usuarioId, rol) = ObtenerUsuarioActual();
 
-            if (rol != "Pagos" &&
-                rol != "Administrador")
+            if (rol != "Pagos" && rol != "Administrador" && rol != "Farmacia")
             {
                 throw new UnauthorizedAccessException(
-                    "Solo Pagos o Administrador pueden registrar el pago."
+                    "Solo Pagos, Farmacia o Administrador pueden registrar el pago."
                 );
             }
 
