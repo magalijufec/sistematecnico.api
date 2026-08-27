@@ -133,7 +133,7 @@ namespace SistemaTecnico.Services
                     Provincia = t.Cliente.Provincia.Nombre,
                     Ciudad = t.Cliente.Ciudad.Nombre,
 
-                    TieneFactura = !string.IsNullOrEmpty(t.Factura),
+                    TieneFactura = t.Facturas.Any(),
 
                     //CantidadImagenes = t.Imagenes.Count
 
@@ -219,11 +219,20 @@ namespace SistemaTecnico.Services
                     TrabajoRealizado = t.TrabajoRealizado,
                     Provincia = t.Cliente.Provincia.Nombre,
                     Ciudad = t.Cliente.Ciudad.Nombre,
-                    Factura = t.Factura
-                })
-                .OrderByDescending(
-                    t => t.FechaFinalizado
-                );
+                    Facturas =
+                        t.Facturas
+                            .Select(x => new TrabajoFacturaDto
+                            {
+                                Id = x.Id,
+                                RutaArchivo = x.RutaArchivo,
+                                FechaCarga = x.FechaCarga,
+                                FechaPagado = x.FechaPagado
+                            })
+                            .ToList(),
+                                    })
+                                    .OrderByDescending(
+                                        t => t.FechaFinalizado
+                                    );
         }
 
         public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync()
@@ -367,11 +376,18 @@ namespace SistemaTecnico.Services
                 TrabajoRealizado =
                     t.TrabajoRealizado,
 
-                TieneFactura =
-                    !string.IsNullOrEmpty(t.Factura),
+                TieneFactura = t.Facturas.Any(),
 
-                Factura =
-                    t.Factura,
+                Facturas =
+                    t.Facturas
+                        .Select(x => new TrabajoFacturaDto
+                        {
+                            Id = x.Id,
+                            RutaArchivo = x.RutaArchivo,
+                            FechaCarga = x.FechaCarga,
+                            FechaPagado = x.FechaPagado
+                        })
+                        .ToList(),
 
                 ImagenesSolicitud =
                     t.SolicitudImagenes
@@ -641,13 +657,13 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo)
+        public async Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos)
         {
             var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
 
             var usuarioPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
 
-            await _trabajoRepository.SubirFacturaAsync(idTrabajo, archivo, _environment);
+            await _trabajoRepository.SubirFacturasAsync(idTrabajo, archivos, _environment);
 
             foreach (var user in usuarioPagos)
             {
@@ -668,11 +684,16 @@ namespace SistemaTecnico.Services
 
         }
 
-        public async Task<bool> RegistrarPagoAsync(int idTrabajo)
+        public async Task<RegistrarPagoFacturaResponseDto> RegistrarPagoAsync(int idTrabajo, int idFactura)
         {
-            var (usuarioId, rol) = ObtenerUsuarioActual();
+            var (_, rol) =
+                ObtenerUsuarioActual();
 
-            if (rol != "Pagos" && rol != "Administrador" && rol != "Farmacia")
+            if (
+                rol != "Pagos" &&
+                rol != "Administrador" &&
+                rol != "Farmacia"
+            )
             {
                 throw new UnauthorizedAccessException(
                     "Solo Pagos, Farmacia o Administrador pueden registrar el pago."
@@ -680,36 +701,180 @@ namespace SistemaTecnico.Services
             }
 
             var trabajo =
-                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+                await _trabajoRepository
+                    .ObtenerPorIdAsync(
+                        idTrabajo
+                    );
 
             if (trabajo == null)
-                return false;
+            {
+                throw new KeyNotFoundException(
+                    $"No existe el trabajo #{idTrabajo}."
+                );
+            }
 
-            if (trabajo.Estado.Id != 5)
+            if (
+                trabajo.Estado.Id !=
+                    EstadosTrabajo.PendientePago
+            )
+            {
                 throw new InvalidOperationException(
                     "El trabajo debe estar pendiente de pago."
                 );
-
-            trabajo.FechaPagado = DateTime.UtcNow;
-            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Finalizado);
-            trabajo.Estado = estado;
-
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
-
-            if (!string.IsNullOrWhiteSpace(trabajo.Tecnico.Email))
-            {
-                var html = TrabajoEmailTemplates.TrabajoFinalizado(trabajo.Id,
-                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
-
-                await _emailService.EnviarAsync(
-                    trabajo.Tecnico?.Email,
-                    $"Trabajo pagado #{trabajo.Id}",
-                    html);
             }
 
-            return true;
+            if (
+                trabajo.Facturas == null ||
+                trabajo.Facturas.Count == 0
+            )
+            {
+                throw new InvalidOperationException(
+                    "El trabajo no tiene facturas registradas."
+                );
+            }
+
+            var factura =
+                trabajo.Facturas
+                    .FirstOrDefault(f =>
+                        f.Id == idFactura
+                    );
+
+            if (factura == null)
+            {
+                throw new KeyNotFoundException(
+                    $"No existe la factura #{idFactura} en el trabajo #{idTrabajo}."
+                );
+            }
+
+            /*
+             * Operación idempotente.
+             * Si ya estaba pagada, no modifica nuevamente la fecha.
+             */
+            if (!factura.FechaPagado.HasValue)
+            {
+                factura.FechaPagado =
+                    DateTime.UtcNow;
+            }
+
+            var cantidadFacturas =
+                trabajo.Facturas.Count;
+
+            var cantidadPagadas =
+                trabajo.Facturas.Count(f =>
+                    f.FechaPagado.HasValue
+                );
+
+            var cantidadPendientes =
+                cantidadFacturas -
+                cantidadPagadas;
+
+            var todasPagadas =
+                cantidadFacturas > 0 &&
+                cantidadPendientes == 0;
+
+            var enviarCorreoFinalizacion =
+                false;
+
+            if (todasPagadas)
+            {
+                /*
+                 * Solamente marca la transición final
+                 * si el trabajo todavía no estaba finalizado.
+                 */
+                if (
+                    trabajo.Estado.Id !=
+                        EstadosTrabajo.Finalizado
+                )
+                {
+                    trabajo.FechaPagado =
+                        DateTime.UtcNow;
+
+                    trabajo.Estado =
+                        await _estadoRepository
+                            .ObtenerPorIdAsync(
+                                EstadosTrabajo.Finalizado
+                            );
+
+                    enviarCorreoFinalizacion =
+                        true;
+                }
+            }
+            else
+            {
+                /*
+                 * Todavía existen facturas pendientes.
+                 */
+                trabajo.Estado =
+                    await _estadoRepository
+                        .ObtenerPorIdAsync(
+                            EstadosTrabajo.PendientePago
+                        );
+
+                trabajo.FechaPagado =
+                    null;
+            }
+
+            await _trabajoRepository
+                .ActualizarAsync(trabajo);
+
+            await _trabajoRepository
+                .GuardarCambiosAsync();
+
+            /*
+             * El correo solo se envía cuando el pago
+             * de esta factura completa todas las facturas.
+             */
+            if (
+                enviarCorreoFinalizacion &&
+                !string.IsNullOrWhiteSpace(
+                    trabajo.Tecnico?.Email
+                )
+            )
+            {
+                var html =
+                    TrabajoEmailTemplates
+                        .TrabajoFinalizado(
+                            trabajo.Id,
+                            $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}",
+                            trabajo.Tecnico.NombreApellido,
+                            trabajo.Tarea.Descripcion
+                        );
+
+                await _emailService.EnviarAsync(
+                    trabajo.Tecnico.Email,
+                    $"Trabajo pagado #{trabajo.Id}",
+                    html
+                );
+            }
+
+            return new RegistrarPagoFacturaResponseDto
+            {
+                TrabajoId =
+                    trabajo.Id,
+
+                FacturaId =
+                    factura.Id,
+
+                FechaPagadoFactura =
+                    factura.FechaPagado!.Value,
+
+                TrabajoFinalizado =
+                    todasPagadas,
+
+                CantidadFacturas =
+                    cantidadFacturas,
+
+                CantidadFacturasPagadas =
+                    cantidadPagadas,
+
+                CantidadFacturasPendientes =
+                    cantidadPendientes,
+
+                Mensaje =
+                    todasPagadas
+                        ? "Pago registrado. Todas las facturas están pagadas y el trabajo fue finalizado."
+                        : $"Pago registrado. Quedan {cantidadPendientes} factura(s) pendientes."
+            };
         }
 
         public async Task<bool> SolicitarMejoraAsync(int id, SolicitarMejoraDTO dto)
@@ -1131,9 +1296,7 @@ namespace SistemaTecnico.Services
             return stream.ToArray();
         }
 
-        private void DibujarImagenSolicitud(
-                    QuestPDF.Infrastructure.IContainer container,
-                    Imagen imagen)
+        private void DibujarImagenSolicitud(QuestPDF.Infrastructure.IContainer container, Imagen imagen)
         {
             container
                 .Border(1)
@@ -1203,9 +1366,7 @@ namespace SistemaTecnico.Services
             }
         }
 
-        private static void DibujarImagenNoDisponible(
-                    QuestPDF.Fluent.ColumnDescriptor column,
-                    string mensaje)
+        private static void DibujarImagenNoDisponible(QuestPDF.Fluent.ColumnDescriptor column, string mensaje)
         {
             column.Item()
                 .Height(210)
@@ -1216,10 +1377,7 @@ namespace SistemaTecnico.Services
                 .FontSize(9)
                 .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
         }
-        private void DibujarImagenComparacion(
-                    QuestPDF.Infrastructure.IContainer container,
-                    string titulo,
-                    Imagen? imagen)
+        private void DibujarImagenComparacion(QuestPDF.Infrastructure.IContainer container, string titulo,Imagen? imagen)
         {
             container
                 .Border(1)
@@ -1258,10 +1416,7 @@ namespace SistemaTecnico.Services
                         .FitArea();
                 });
         }
-        private static void FilaPdf(
-            QuestPDF.Fluent.TableDescriptor table,
-            string titulo,
-            string? valor)
+        private static void FilaPdf(QuestPDF.Fluent.TableDescriptor table, string titulo, string? valor)
         {
             table.Cell()
                 .BorderBottom(1)

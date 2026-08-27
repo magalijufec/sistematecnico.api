@@ -96,14 +96,6 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
-    //[Authorize(Roles = "Administrador,Tecnico")]
-    //[HttpPost("{id}/imagenes")]
-    //public async Task<IActionResult> SubirImagenes(int id, [FromForm] bool antes, [FromForm] List<IFormFile> archivos)
-    //{
-    //    await _imagenService.SubirImagenes(id, antes, archivos);
-    //    return Ok();
-    //}
-
     [HttpGet("{id}/imagenes")]
     public async Task<IActionResult> Obtener(int id)
     {
@@ -118,18 +110,19 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
-    
+
     [Authorize(Roles = "Administrador,Tecnico")]
-    [HttpPost("{id}/factura")]
-    public async Task<IActionResult> SubirFactura(int id, IFormFile archivo)
+    [HttpPost("{id:int}/facturas")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> SubirFacturas(int id, [FromForm] IFormFile[] archivos)
     {
         try
         {
-            await _trabajoService.SubirFacturaAsync(id, archivo);
+            await _trabajoService.SubirFacturasAsync(id, archivos);     
 
             return Ok(new
-            {
-                mensaje = "Factura cargada correctamente"
+            {                
+                mensaje = "Facturas cargadas correctamente"
             });
         }
         catch (KeyNotFoundException ex)
@@ -146,27 +139,58 @@ public class TrabajoController : ControllerBase
                 mensaje = ex.Message
             });
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    mensaje = "No se pudieron cargar las facturas."
+                }
+            );
+        }
     }
 
     [Authorize(Roles = "Administrador,Pagos,Farmacia")]
-    [HttpPut("{id}/registrar-pago")]
-    public async Task<IActionResult> RegistrarPago(int id)
+    [HttpPut("{idTrabajo:int}/facturas/{idFactura:int}/registrar-pago")]
+    public async Task<IActionResult> RegistrarPagoFactura(int idTrabajo, int idFactura)
     {
         try
         {
-            var resultado = await _trabajoService.RegistrarPagoAsync(id);
+            var resultado =
+                await _trabajoService
+                    .RegistrarPagoAsync(
+                        idTrabajo,
+                        idFactura
+                    );
 
-            if (!resultado)
-                return NotFound();
-
-            return Ok(new
+            return Ok(resultado);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
             {
-                mensaje = "Pago registrado correctamente."
+                mensaje = ex.Message
             });
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            return Forbid();
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (InvalidOperationException ex)
         {
@@ -175,7 +199,21 @@ public class TrabajoController : ControllerBase
                 mensaje = ex.Message
             });
         }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    mensaje =
+                        "No se pudo registrar el pago de la factura."
+                }
+            );
+        }
     }
+
 
     [HttpPut("{id}/iniciar")]
     [Authorize(Roles = "Tecnico")]

@@ -32,6 +32,7 @@ namespace SistemaTecnico.Data
         public DbSet<EstadoTrabajo> EstadosTrabajo => Set<EstadoTrabajo>();
         public DbSet<TrabajoImagenComparacion> TrabajoImagenComparaciones => Set<TrabajoImagenComparacion>();
         public DbSet<ErrorLog> ErrorLogs { get; set; }
+        public DbSet<TrabajoFactura> TrabajoFacturas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

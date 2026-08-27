@@ -25,7 +25,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Estado)
             .Include(t => t.Cliente.Provincia)
             .Include(t => t.Cliente.Ciudad)
-            //.Include(t => t.Imagenes)
+            .Include(x => x.Facturas)
             .Include(t => t.SolicitudImagenes)
             .Include(t => t.Tarea)
             .AsNoTracking()
@@ -40,7 +40,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Estado)
             .Include(t => t.Cliente.Provincia)
             .Include(t => t.Cliente.Ciudad)
-            //.Include(t => t.Imagenes) 
+            .Include(x => x.Facturas)
             .Include(t => t.SolicitudImagenes)
             .Include(t => t.Tarea)
             .Where(t => t.Tecnico.Id == idTecnico)
@@ -56,7 +56,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Estado)
             .Include(t => t.Cliente.Provincia)
             .Include(t => t.Cliente.Ciudad)
-            //.Include(t => t.Imagenes)
+            .Include(x => x.Facturas)
             .Include(t => t.Tarea)
             .Include(t => t.SolicitudImagenes)
             .Where(t => t.Cliente.Id == idCliente)
@@ -75,6 +75,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.ComparacionesImagenes)
             .Include(t => t.SolicitudImagenes)
             .Include(t => t.Tarea)
+            .Include(x => x.Facturas)
             .Include(t => t.UsuarioCreacion)
             .AsNoTracking()
             .AsSplitQuery()
@@ -144,93 +145,105 @@ public class TrabajoRepository : ITrabajoRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task SubirFacturaAsync(int idTrabajo, IFormFile archivo, IWebHostEnvironment env)
+    public async Task SubirFacturasAsync(
+        int idTrabajo,
+        IFormFile[] archivos,
+        IWebHostEnvironment env)
     {
-        if (archivo == null || archivo.Length == 0)
+        if (
+            archivos == null ||
+            archivos.Length == 0
+        )
         {
-            throw new ArgumentException("No se recibió ningún archivo.");
+            throw new ArgumentException(
+                "No se recibió ningún archivo."
+            );
         }
 
-        var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
+        var trabajo =
+            await _context.Trabajos.FindAsync(
+                idTrabajo
+            );
 
         if (trabajo == null)
         {
-            throw new KeyNotFoundException($"No existe el trabajo con ID {idTrabajo}");
+            throw new KeyNotFoundException(
+                $"No existe el trabajo con ID {idTrabajo}"
+            );
         }
 
-        // Validar extensión
-        var extension =
-            Path.GetExtension(archivo.FileName)
-            .ToLowerInvariant();
-
-        var extensionesPermitidas = new[]
-        {
-                ".pdf",
-                ".jpg",
-                ".jpeg",
-                ".png"
-            };
-
-        if (!extensionesPermitidas.Contains(extension))
-        {
-            throw new ArgumentException(
-                "El archivo debe ser PDF, JPG, JPEG o PNG.");
-        }
-
-        // Carpeta
-        string carpeta = Path.Combine(
-            env.ContentRootPath,
-            "wwwroot",
-            "uploads",
-            "facturas",
-            idTrabajo.ToString()
-        );
+        string carpeta =
+            Path.Combine(
+                env.ContentRootPath,
+                "wwwroot",
+                "uploads",
+                "facturas",
+                idTrabajo.ToString()
+            );
 
         Directory.CreateDirectory(carpeta);
 
-        // Si ya existe una factura, eliminarla
-        if (!string.IsNullOrEmpty(trabajo.Factura))
+        foreach (var archivo in archivos)
         {
-            string rutaAnterior =
+            var extension =
+                Path.GetExtension(
+                    archivo.FileName
+                )
+                .ToLowerInvariant();
+
+            var extensionesPermitidas =
+                new[]
+                {
+                ".pdf"
+                };
+
+            if (
+                !extensionesPermitidas.Contains(
+                    extension
+                )
+            )
+            {
+                throw new ArgumentException(
+                    $"El archivo {archivo.FileName} no es un PDF."
+                );
+            }
+
+            string nombreArchivo =
+                $"factura_{Guid.NewGuid()}{extension}";
+
+            string rutaFisica =
                 Path.Combine(
-                    env.ContentRootPath,
-                    "wwwroot",
-                    trabajo.Factura.TrimStart('/')
-                        .Replace("/", Path.DirectorySeparatorChar.ToString())
+                    carpeta,
+                    nombreArchivo
                 );
 
-            if (File.Exists(rutaAnterior))
-            {
-                File.Delete(rutaAnterior);
-            }
+            using var stream =
+                new FileStream(
+                    rutaFisica,
+                    FileMode.Create
+                );
+
+            await archivo.CopyToAsync(stream);
+
+            var factura =
+                new TrabajoFactura
+                {
+                    TrabajoId = trabajo.Id,
+
+                    RutaArchivo =
+                        $"/uploads/facturas/" +
+                        $"{idTrabajo}/" +
+                        $"{nombreArchivo}",
+
+                    FechaCarga =
+                        DateTime.Now
+                };
+
+            _context.TrabajoFacturas.Add(factura);
         }
 
-        // Nombre nuevo
-        string nombreArchivo =
-            $"factura{DateTime.UtcNow:yyMMddHHmmss}{extension}";
-
-        string rutaFisica =
-            Path.Combine(
-                carpeta,
-                nombreArchivo
-            );
-
-        // Guardar archivo
-        using var stream =
-            new FileStream(
-                rutaFisica,
-                FileMode.Create
-            );
-
-        await archivo.CopyToAsync(stream);
-
-        // Ruta que se guarda en DB
-        trabajo.Factura =
-            $"/uploads/facturas/" +
-            $"{idTrabajo}/" +
-            $"{nombreArchivo}";
-
-        trabajo.EstadoId = EstadosTrabajo.PendientePago;
+        trabajo.EstadoId =
+            EstadosTrabajo.PendientePago;
 
         await _context.SaveChangesAsync();
     }

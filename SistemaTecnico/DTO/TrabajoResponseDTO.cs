@@ -1,4 +1,6 @@
-﻿namespace SistemaTecnico.DTO
+﻿using SistemaTecnico.Models;
+
+namespace SistemaTecnico.DTO
 {
     public class TrabajoResponseDto
     {
@@ -19,7 +21,7 @@
         public string Ciudad { get; set; }
         public string? Comentarios { get; set; }
         public string? TrabajoRealizado { get; set; }
-        public string? Factura { get; set; }
+        public List<TrabajoFacturaDto> Facturas { get; set; } = new ();
         public bool TieneFactura { get; set; }
         public string Solicitante { get; set; }
         public List<ImagenDTO> ImagenesSolicitud { get; set; }

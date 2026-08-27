@@ -26,8 +26,7 @@ public interface ITrabajoRepository
 
     Task<IEnumerable<Trabajo>> ObtenerPorFechasAsync(DateTime desde, DateTime hasta);
 
-    //Task GuardarTrabajoRealizado(int id, TrabajoRealizadoDTO dto);
     Task RegistrarPagoAsync(int idTrabajo);
 
-    Task SubirFacturaAsync(int idTrabajo, IFormFile archivo, IWebHostEnvironment environment);
+    Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos, IWebHostEnvironment env);
 }

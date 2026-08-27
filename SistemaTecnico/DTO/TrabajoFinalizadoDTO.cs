@@ -7,7 +7,7 @@
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFinalizado { get; set; }
         public DateTime? FechaPagado { get; set; }
-        public string? Factura { get; set; }
+        public List<TrabajoFacturaDto> Facturas { get; set; }
         public int IdTecnico { get; set; }
         public string Tecnico { get; set; } = string.Empty;
         public int IdCliente { get; set; }
