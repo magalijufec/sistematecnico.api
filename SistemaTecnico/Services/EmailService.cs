@@ -2,6 +2,7 @@
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
 
 namespace SistemaTecnico.Services
@@ -15,12 +16,12 @@ namespace SistemaTecnico.Services
             _settings = options.Value; 
         }
 
-        public async Task EnviarAsync(string destinatario, string asunto, string cuerpo, List<byte[]>? archivosAdjuntos, bool esHtml = true) 
+        public async Task EnviarAsync(string destinatario, string asunto, string cuerpo, List<ArchivoAdjunto>? archivosAdjuntos, bool esHtml = true) 
         { 
             await EnviarAsync(new[] { destinatario }, asunto, cuerpo, archivosAdjuntos, esHtml); 
         }
 
-        public async Task EnviarAsync(IEnumerable<string> destinatarios, string asunto, string cuerpo, List<byte[]>? archivosAdjuntos, bool esHtml = true)
+        public async Task EnviarAsync(IEnumerable<string> destinatarios, string asunto, string cuerpo, List<ArchivoAdjunto>? archivosAdjuntos, bool esHtml = true)
         {
             var message = new MimeMessage(); 
 
@@ -53,8 +54,8 @@ namespace SistemaTecnico.Services
                 foreach (var archivo in archivosAdjuntos)
                 {
                     bodyBuilder.Attachments.Add(
-                    "Informe-tecnico.pdf",
-                    archivo,
+                    archivo.Nombre,
+                    archivo.Archivo,
                     ContentType.Parse("application/pdf")
                     );
                 }            

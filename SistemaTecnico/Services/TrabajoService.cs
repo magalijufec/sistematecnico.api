@@ -606,13 +606,23 @@ namespace SistemaTecnico.Services
 
                 var pdf = await GenerarInformePdfAsync(trabajo.Id);
 
+                var adjuntos = new List<ArchivoAdjunto>{
+                new ArchivoAdjunto
+                {
+                    Nombre =
+                        $"Informe-Trabajo-{trabajo.Id}.pdf",
+
+                    Archivo = pdf
+                }
+                            };
+
                 await _emailService.EnviarAsync(
-                    trabajo.UsuarioCreacion.Email,
-                    $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
-                    html,
-                    new List<byte[]>{ pdf }
-                );
-            }
+                            trabajo.UsuarioCreacion.Email,
+                            $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
+                            html,
+                            adjuntos
+                        );
+                }
 
             return true;
         }
@@ -680,10 +690,11 @@ namespace SistemaTecnico.Services
                         trabajo.Tarea.Descripcion
                     );
 
-            var facturas = trabajo.Facturas;
-            var adjuntos = new List<byte[]>();
+            var trabajoUpdated = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+            var facturas = trabajoUpdated.Facturas;
+            var adjuntos = new List<ArchivoAdjunto>();
 
-            foreach (var factura in trabajo.Facturas)
+            foreach (var factura in facturas)
             {
                 var rutaFisica = Path.Combine(
                     _environment.WebRootPath,
@@ -698,7 +709,18 @@ namespace SistemaTecnico.Services
                 if (!File.Exists(rutaFisica))
                     continue;
 
-                adjuntos.Add(await File.ReadAllBytesAsync(rutaFisica)
+                adjuntos.Add(
+                    new ArchivoAdjunto
+                    {
+                        Nombre = Path.GetFileName(
+                            rutaFisica
+                        ),
+
+                        Archivo =
+                            await File.ReadAllBytesAsync(
+                                rutaFisica
+                            )
+                    }
                 );
             }
 

@@ -1,4 +1,6 @@
-﻿namespace SistemaTecnico.Services
+﻿using SistemaTecnico.DTO;
+
+namespace SistemaTecnico.Services
 {
     public interface IEmailService
     {
@@ -6,7 +8,7 @@
             string destinatario,
             string asunto,
             string cuerpo,
-            List<byte[]>? archivosAdjuntos = null,
+            List<ArchivoAdjunto>? archivosAdjuntos = null,
             bool esHtml = true            
         );
 
@@ -14,7 +16,7 @@
             IEnumerable<string> destinatarios,
             string asunto,
             string cuerpo,
-            List<byte[]>? archivosAdjuntos,
+            List<ArchivoAdjunto>? archivosAdjuntos = null,
             bool esHtml = true
         );
     }
