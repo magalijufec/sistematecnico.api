@@ -676,3 +676,81 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260826144304_agregoFacturaTrabajo'
+)
+BEGIN
+    DECLARE @var4 nvarchar(max);
+    SELECT @var4 = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Trabajos]') AND [c].[name] = N'Factura');
+    IF @var4 IS NOT NULL EXEC(N'ALTER TABLE [Trabajos] DROP CONSTRAINT ' + @var4 + ';');
+    ALTER TABLE [Trabajos] DROP COLUMN [Factura];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260826144304_agregoFacturaTrabajo'
+)
+BEGIN
+    CREATE TABLE [TrabajoFacturas] (
+        [Id] int NOT NULL IDENTITY,
+        [TrabajoId] int NOT NULL,
+        [RutaArchivo] nvarchar(max) NOT NULL,
+        [FechaCarga] datetime2 NOT NULL,
+        [FechaPagado] datetime2 NOT NULL,
+        CONSTRAINT [PK_TrabajoFacturas] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_TrabajoFacturas_Trabajos_TrabajoId] FOREIGN KEY ([TrabajoId]) REFERENCES [Trabajos] ([Id]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260826144304_agregoFacturaTrabajo'
+)
+BEGIN
+    CREATE INDEX [IX_TrabajoFacturas_TrabajoId] ON [TrabajoFacturas] ([TrabajoId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260826144304_agregoFacturaTrabajo'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260826144304_agregoFacturaTrabajo', N'10.0.9');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260826150537_nulleableFechaPagadoFactura'
+)
+BEGIN
+    DECLARE @var5 nvarchar(max);
+    SELECT @var5 = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[TrabajoFacturas]') AND [c].[name] = N'FechaPagado');
+    IF @var5 IS NOT NULL EXEC(N'ALTER TABLE [TrabajoFacturas] DROP CONSTRAINT ' + @var5 + ';');
+    ALTER TABLE [TrabajoFacturas] ALTER COLUMN [FechaPagado] datetime2 NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260826150537_nulleableFechaPagadoFactura'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260826150537_nulleableFechaPagadoFactura', N'10.0.9');
+END;
+
+COMMIT;
+GO
+

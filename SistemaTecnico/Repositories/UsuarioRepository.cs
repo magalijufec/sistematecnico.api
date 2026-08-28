@@ -45,6 +45,16 @@ namespace SistemaTecnico.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        public async Task<List<Usuario>?> ObtenerPorClienteAsync(int clienteId)
+        {
+            return await _context.Usuarios
+                .Include(x => x.Perfil)
+                .Include(x => x.Provincia)
+                .Include(x => x.Ciudad)
+                .Include(x => x.Cliente)
+                .Where(x => x.Cliente != null && x.Cliente.Id == clienteId).ToListAsync();
+        }
+
         public async Task<Usuario?> ObtenerPorUsuarioAsync(string userName)
         {
             return await _context.Usuarios

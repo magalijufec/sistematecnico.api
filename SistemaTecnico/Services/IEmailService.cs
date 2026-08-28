@@ -6,7 +6,7 @@
             string destinatario,
             string asunto,
             string cuerpo,
-            byte[]? archivoAdjunto = null,
+            List<byte[]>? archivosAdjuntos = null,
             bool esHtml = true            
         );
 
@@ -14,7 +14,7 @@
             IEnumerable<string> destinatarios,
             string asunto,
             string cuerpo,
-            byte[]? archivoAdjunto,
+            List<byte[]>? archivosAdjuntos,
             bool esHtml = true
         );
     }

@@ -610,7 +610,7 @@ namespace SistemaTecnico.Services
                     trabajo.UsuarioCreacion.Email,
                     $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
                     html,
-                    pdf
+                    new List<byte[]>{ pdf }
                 );
             }
 
@@ -660,28 +660,57 @@ namespace SistemaTecnico.Services
         public async Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos)
         {
             var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+            var usuariosPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
+            var usuariosFarmacia = await _usuarioRepository.ObtenerPorClienteAsync(trabajo.ClienteId);
 
-            var usuarioPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
+            var destinatarios = usuariosPagos
+                                    .Concat( usuariosFarmacia ?? Enumerable.Empty<Usuario>())
+                                    .Where(x =>!string.IsNullOrWhiteSpace(x.Email))
+                                    .Select(x =>x.Email!.Trim())
+                                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                                    .ToList();
 
             await _trabajoRepository.SubirFacturasAsync(idTrabajo, archivos, _environment);
 
-            foreach (var user in usuarioPagos)
+            var html = TrabajoEmailTemplates
+                    .FacturaPendientePago(
+                        trabajo.Id,
+                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
+                        trabajo.Tecnico.NombreApellido,
+                        trabajo.Tarea.Descripcion
+                    );
+
+            var facturas = trabajo.Facturas;
+            var adjuntos = new List<byte[]>();
+
+            foreach (var factura in trabajo.Facturas)
             {
-                if (!string.IsNullOrWhiteSpace(user.Email))
-                {
-                    var html = TrabajoEmailTemplates.FacturaPendientePago(trabajo.Id,
-                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}", trabajo.Tecnico.NombreApellido, trabajo.Tarea.Descripcion);
+                var rutaFisica = Path.Combine(
+                    _environment.WebRootPath,
+                    factura.RutaArchivo
+                        .TrimStart('/')
+                        .Replace(
+                            "/",
+                            Path.DirectorySeparatorChar.ToString()
+                        )
+                );
 
-                    var pdf = await GenerarInformePdfAsync(trabajo.Id);
+                if (!File.Exists(rutaFisica))
+                    continue;
 
-                    await _emailService.EnviarAsync(
-                        user.Email,
-                        $"Factura pendiente de pago #{trabajo.Id}",
-                        html,
-                        pdf);
-                }
+                adjuntos.Add(await File.ReadAllBytesAsync(rutaFisica)
+                );
             }
 
+            foreach (var email in destinatarios)
+            {
+                await _emailService.EnviarAsync(
+                    email,
+                    $"Factura pendiente de pago #{trabajo.Id}",
+                    html,
+                    adjuntos
+                );
+            }
         }
 
         public async Task<RegistrarPagoFacturaResponseDto> RegistrarPagoAsync(int idTrabajo, int idFactura)
