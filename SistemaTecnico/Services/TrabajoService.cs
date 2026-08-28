@@ -391,7 +391,6 @@ namespace SistemaTecnico.Services
 
                 ImagenesSolicitud =
                     t.SolicitudImagenes
-                        .Where(x => !idsComparacion.Contains(x.Id))
                         .Select(x => new ImagenDTO
                         {
                             Id = x.Id,

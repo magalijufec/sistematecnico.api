@@ -64,13 +64,15 @@ namespace SistemaTecnico.Services
 
             Directory.CreateDirectory(carpeta);
 
+            int i = 0;
+
             foreach (var archivo in archivos)
             {
                 if (archivo == null || archivo.Length == 0)
                     continue;
 
                 string extension = Path.GetExtension(archivo.FileName);
-                string nombreArchivo = $"{DateTime.UtcNow:yyMMdd_HHmmss}{extension}";
+                string nombreArchivo = $"{DateTime.UtcNow:yyMMdd_HHmmss}_{i++}{extension}";
 
                 string rutaFisica =
                     Path.Combine(
