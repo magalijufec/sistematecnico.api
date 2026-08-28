@@ -583,24 +583,11 @@ namespace SistemaTecnico.Services
             //se le avisa a sistemas que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
             if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
             {
-                var comparaciones = await _trabajoImagenComparacionRepository.ObtenerPorTrabajoAsync(trabajo.Id);
-
-                var imagenes = comparaciones.Select(x => (
-                                Antes: x.ImagenAntes != null
-                                    ? $"https://localhost:7122{x.ImagenAntes.RutaArchivo}"
-                                    : null,
-
-                                Despues: x.ImagenDespues != null
-                                    ? $"https://localhost:7122{x.ImagenDespues.RutaArchivo}"
-                                    : null
-                            ));
-
                 var html = TrabajoEmailTemplates.TrabajoPendienteAprobacion(trabajo.Tecnico.NombreApellido,
                                 trabajo.Id,
                                 $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
                                 trabajo.Tarea.Descripcion,
-                                trabajo.TrabajoRealizado ?? "",
-                                imagenes
+                                trabajo.TrabajoRealizado ?? ""
                             );
 
                 var pdf = await GenerarInformePdfAsync(trabajo.Id);

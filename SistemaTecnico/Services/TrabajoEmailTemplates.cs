@@ -118,63 +118,11 @@ namespace SistemaTecnico.Services
 
         public static string TrabajoPendienteAprobacion(
             string tecnico,
-    int idTrabajo,
-    string cliente,
-    string tarea,
-    string trabajoRealizado,
-    IEnumerable<(string? Antes, string? Despues)> comparaciones)
+            int idTrabajo,
+            string cliente,
+            string tarea,
+            string trabajoRealizado)
         {
-            var imagenesHtml = "";
-
-            foreach (var comparacion in comparaciones)
-            {
-                imagenesHtml += $"""
-            <div style="margin-bottom: 25px;">
-
-                <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-
-                        <td width="50%" style="text-align:center; vertical-align:top; padding:10px;">
-
-                            <strong>Antes</strong>
-                            <br><br>
-
-                            {(string.IsNullOrWhiteSpace(comparacion.Antes)
-                                        ? "<p>No hay imagen</p>"
-                                        : $"""
-                                    <img
-                                        src="{comparacion.Antes}"
-                                        alt="Imagen antes"
-                                        style="max-width:100%; border-radius:6px;"
-                                    />
-                                  """)}
-
-                        </td>
-
-
-                        <td width="50%" style="text-align:center; vertical-align:top; padding:10px;">
-
-                            <strong>Después</strong>
-                            <br><br>
-
-                            {(string.IsNullOrWhiteSpace(comparacion.Despues)
-                                        ? "<p>No hay imagen</p>"
-                                        : $"""
-                                    <img
-                                        src="{comparacion.Despues}"
-                                        alt="Imagen después"
-                                        style="max-width:100%; border-radius:6px;"
-                                    />
-                                  """)}
-
-                        </td>
-
-                    </tr>
-                </table>
-
-            </div>
-            """;
-            }
 
             var contenido = $"""
         <p>
@@ -205,10 +153,6 @@ namespace SistemaTecnico.Services
         ">
             {trabajoRealizado}
         </div>
-
-        <h3>Imágenes del trabajo</h3>
-
-        {imagenesHtml}
 
         <p>
             Ingresá al Sistema Técnico para revisar el trabajo y
