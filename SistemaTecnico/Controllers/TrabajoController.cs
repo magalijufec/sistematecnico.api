@@ -36,11 +36,11 @@ public class TrabajoController : ControllerBase
         return Ok(trabajos);
     }
 
-    [HttpGet("finalizados")]
-    public async Task<IActionResult> GetFinalizados()
+    [HttpGet("pagados")]
+    public async Task<IActionResult> GetPagados()
     {
         var trabajos =
-            await _trabajoService.ObtenerTrabajosFinalizadosAsync();
+            await _trabajoService.ObtenerTrabajosPagadosAsync();
 
         return Ok(trabajos);
     }

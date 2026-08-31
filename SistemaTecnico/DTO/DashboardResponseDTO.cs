@@ -10,7 +10,7 @@
         public int PendientePago { get; set; }
         public int Aprobados { get; set; }
 
-        public int Finalizados { get; set; }
+        public int Pagados { get; set; }
 
         public int TotalTrabajos { get; set; }
 

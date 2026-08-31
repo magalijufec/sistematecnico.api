@@ -139,7 +139,7 @@ public class TrabajoRepository : ITrabajoRepository
                 $"No existe el trabajo con ID {idTrabajo}");
 
         trabajo.FechaPagado = DateTime.UtcNow;
-        var estado = await _context.EstadosTrabajo.FindAsync(4); // Finalizado
+        var estado = await _context.EstadosTrabajo.FindAsync(EstadosTrabajo.Pagado); 
         trabajo.Estado = estado;
 
         await _context.SaveChangesAsync();

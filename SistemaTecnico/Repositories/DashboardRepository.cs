@@ -39,8 +39,8 @@ namespace SistemaTecnico.Repositories
                 PendientePago = _context.Trabajos
                     .Count(x => x.Estado.Id == EstadosTrabajo.PendientePago),
 
-                Finalizados = _context.Trabajos
-                    .Count(x => x.Estado.Id == EstadosTrabajo.Finalizado),
+                Pagados = _context.Trabajos
+                    .Count(x => x.Estado.Id == EstadosTrabajo.Pagado),
 
                 TotalTrabajos = _context.Trabajos.Count(),
 

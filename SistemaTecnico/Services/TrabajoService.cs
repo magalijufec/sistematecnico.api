@@ -108,7 +108,7 @@ namespace SistemaTecnico.Services
             var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
 
             return trabajos
-                .Where(t => t.Estado.Id != EstadosTrabajo.Finalizado)
+                .Where(t => t.Estado.Id != EstadosTrabajo.Pagado)
                 .Select(t => new TrabajoResponseDto
                 {
                     Id = t.Id,
@@ -235,13 +235,13 @@ namespace SistemaTecnico.Services
                                     );
         }
 
-        public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosFinalizadosAsync()
+        public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPagadosAsync()
         {
             var trabajos =
                 await ObtenerTrabajosSegunUsuarioAsync();
 
             return trabajos
-                .Where(t => t.Estado.Id == EstadosTrabajo.Finalizado)
+                .Where(t => t.Estado.Id == EstadosTrabajo.Pagado)
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
@@ -820,7 +820,7 @@ namespace SistemaTecnico.Services
                  */
                 if (
                     trabajo.Estado.Id !=
-                        EstadosTrabajo.Finalizado
+                        EstadosTrabajo.Pagado
                 )
                 {
                     trabajo.FechaPagado =
@@ -829,7 +829,7 @@ namespace SistemaTecnico.Services
                     trabajo.Estado =
                         await _estadoRepository
                             .ObtenerPorIdAsync(
-                                EstadosTrabajo.Finalizado
+                                EstadosTrabajo.Pagado
                             );
 
                     enviarCorreoFinalizacion =

@@ -281,7 +281,7 @@ namespace SistemaTecnico.Services
 
         // ============================================================
         // 6. PAGO REALIZADO
-        // Estado: Finalizado
+        // Estado: Pagado
         // Destinatarios: Técnico / Farmacia
         // ============================================================
 
@@ -322,7 +322,7 @@ namespace SistemaTecnico.Services
 
                 <p>
                     <strong>Estado:</strong>
-                    Finalizado
+                    Pagado
                 </p>
             </div>
 

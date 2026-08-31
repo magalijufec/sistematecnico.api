@@ -14,6 +14,6 @@
         public const int TrabajoFinalizado = 3;
         public const int Aprobado = 4;
         public const int PendientePago = 5;
-        public const int Finalizado = 6;
+        public const int Pagado = 6;
     }
 }
