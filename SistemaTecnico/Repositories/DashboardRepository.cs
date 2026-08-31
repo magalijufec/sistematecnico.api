@@ -47,7 +47,7 @@ namespace SistemaTecnico.Repositories
                 TotalClientes = _context.Clientes.Count(),
 
                 TotalTecnicos = _context.Usuarios
-                    .Count(x => x.Perfil.Id == 7 && x.Activo),
+                    .Count(x => x.Perfil.Id == Perfiles.Tecnico && x.Activo),
 
                 TrabajosHoy = _context.Trabajos
                     .Count(x => x.FechaSolicitud.Date == hoy),

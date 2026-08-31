@@ -105,7 +105,7 @@ namespace SistemaTecnico.Repositories
         {
             return await _context.Usuarios
                 .Include(x => x.Provincia)
-                .Where(x => x.Perfil.Id == 7 && x.Activo)
+                .Where(x => x.Perfil.Id == Perfiles.Tecnico && x.Activo)
                 .OrderBy(x => x.NombreApellido)
                 .ToListAsync();
         }

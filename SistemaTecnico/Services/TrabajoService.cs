@@ -114,28 +114,19 @@ namespace SistemaTecnico.Services
                     Id = t.Id,
                     FechaSolicitud = t.FechaSolicitud,
                     FechaInicio = t.FechaInicio,
-
                     IdEstado = t.Estado.Id,
                     Estado = t.Estado.Nombre,
                     EstadoColor = t.Estado.Color,
-
                     IdCliente = t.Cliente.Id,
                     Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
-
                     IdTecnico = t.Tecnico.Id,
                     Tecnico = t.Tecnico.NombreApellido,
-
                     IdTarea = t.Tarea.Id,
                     Tarea = t.Tarea.Descripcion,
-
                     TrabajoRealizado = t.TrabajoRealizado,
-
                     Provincia = t.Cliente.Provincia.Nombre,
                     Ciudad = t.Cliente.Ciudad.Nombre,
-
-                    TieneFactura = t.Facturas.Any(),
-
-                    //CantidadImagenes = t.Imagenes.Count
+                    TieneFactura = t.Facturas.Any()
 
                 })
                 .OrderByDescending(t => t.FechaSolicitud);
@@ -656,7 +647,7 @@ namespace SistemaTecnico.Services
         public async Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos)
         {
             var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
-            var usuariosPagos = await _usuarioRepository.ObtenerPorPerfil(9); //pagos
+            var usuariosPagos = await _usuarioRepository.ObtenerPorPerfil(Perfiles.Pagos); //pagos
             var usuariosFarmacia = await _usuarioRepository.ObtenerPorClienteAsync(trabajo.ClienteId);
 
             var destinatarios = usuariosPagos
