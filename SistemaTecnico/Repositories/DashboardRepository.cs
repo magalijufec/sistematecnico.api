@@ -25,13 +25,13 @@ namespace SistemaTecnico.Repositories
             return new DashboardResponseDto
             {
                 Pendientes = _context.Trabajos
-                    .Count(x => x.Estado.Id == EstadosTrabajo.Pendiente),
+                    .Count(x => x.Estado.Id == EstadosTrabajo.PendienteRevisionSector),
 
                 EnProceso = _context.Trabajos
                     .Count(x => x.Estado.Id == EstadosTrabajo.EnProceso),
 
                 TrabajosFinalizados = _context.Trabajos
-                    .Count(x => x.Estado.Id == EstadosTrabajo.TrabajoFinalizado),
+                    .Count(x => x.Estado.Id == EstadosTrabajo.Finalizado),
 
                 Aprobados = _context.Trabajos
                     .Count(x => x.Estado.Id == EstadosTrabajo.Aprobado),
@@ -40,7 +40,7 @@ namespace SistemaTecnico.Repositories
                     .Count(x => x.Estado.Id == EstadosTrabajo.PendientePago),
 
                 Pagados = _context.Trabajos
-                    .Count(x => x.Estado.Id == EstadosTrabajo.Pagado),
+                    .Count(x => x.Estado.Id == EstadosTrabajo.Finalizado),
 
                 TotalTrabajos = _context.Trabajos.Count(),
 

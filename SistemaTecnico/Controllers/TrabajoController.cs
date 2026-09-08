@@ -18,11 +18,17 @@ public class TrabajoController : ControllerBase
         _imagenService = imagenService;
     }
 
+    [HttpGet("solicitudes")]
+    public async Task<IActionResult> GerSolicitudesDeTrabajo()
+    {
+        var trabajos = await _trabajoService.ObtenerSolicitudesDeTrabajoAsync();
+        return Ok(trabajos);
+    }
+
     [HttpGet("no-finalizados")]
     public async Task<IActionResult> GetNoFinalizados()
     {
-        var trabajos =
-            await _trabajoService.ObtenerTrabajosNoFinalizadosAsync();
+        var trabajos = await _trabajoService.ObtenerTrabajosNoFinalizadosAsync();
 
         return Ok(trabajos);
     }
@@ -30,8 +36,7 @@ public class TrabajoController : ControllerBase
     [HttpGet("pendiente-pago")]
     public async Task<IActionResult> GetPendientesPago()
     {
-        var trabajos =
-            await _trabajoService.ObtenerTrabajosPendientesPagoAsync();
+        var trabajos = await _trabajoService.ObtenerTrabajosPendientesPagoAsync();
 
         return Ok(trabajos);
     }
@@ -39,8 +44,7 @@ public class TrabajoController : ControllerBase
     [HttpGet("pagados")]
     public async Task<IActionResult> GetPagados()
     {
-        var trabajos =
-            await _trabajoService.ObtenerTrabajosPagadosAsync();
+        var trabajos = await _trabajoService.ObtenerTrabajosPagadosAsync();
 
         return Ok(trabajos);
     }
@@ -56,7 +60,7 @@ public class TrabajoController : ControllerBase
         return Ok(trabajo);
     }
 
-    [Authorize(Roles = "Administrador,Sistemas")]
+    [Authorize(Roles = "Administrador,Sistemas,Farmacia")]
     [HttpPost]
     public async Task<IActionResult> Post([FromForm] TrabajoCreateDto dto)
     {
@@ -85,6 +89,57 @@ public class TrabajoController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("{idTrabajo:int}/decision-solicitud")]
+    public async Task<IActionResult>RevisarSolicitud(int idTrabajo, [FromBody] RevisarSolicitudDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var actualizado = await _trabajoService.CambiarEstadoTrabajoAsync(idTrabajo, dto.Aprobado);
+
+        if (!actualizado)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpPut("{idTrabajo:int}/materiales-enviados")]
+    public async Task<IActionResult> MaterialesEnviados(int idTrabajo)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var actualizado = await _trabajoService.MaterialesEnviadosAsync(idTrabajo);
+
+        if (!actualizado)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpPut("{idTrabajo:int}/asignar-tecnicos")]
+    public async Task<IActionResult> AsignarTecnicos(int idTrabajo, List<int> tecnicosIds)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var actualizado = await _trabajoService.AsignarTecnicosAsync(idTrabajo, tecnicosIds);
+
+        if (!actualizado)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpPut("{idTrabajo:int}/materiales")]
+    public async Task<IActionResult> CargarMateriales(int idTrabajo, [FromBody] MaterialesDTO dto)
+    {
+        var actualizado = await _trabajoService.CargarMaterialesAsync(idTrabajo, dto.Materiales);
+
+        if (!actualizado) return NotFound();
+
+        return NoContent();
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -109,7 +164,6 @@ public class TrabajoController : ControllerBase
 
         return NoContent();
     }
-
 
     [Authorize(Roles = "Administrador,Tecnico")]
     [HttpPost("{id:int}/facturas")]
@@ -212,38 +266,7 @@ public class TrabajoController : ControllerBase
                 }
             );
         }
-    }
-
-
-    [HttpPut("{id}/iniciar")]
-    [Authorize(Roles = "Tecnico")]
-    public async Task<IActionResult> IniciarTrabajo(int id)
-    {
-        try
-        {
-            var resultado =
-                await _trabajoService.IniciarTrabajoAsync(id);
-
-            if (!resultado)
-                return NotFound();
-
-            return Ok(new
-            {
-                mensaje = "Trabajo iniciado correctamente."
-            });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new
-            {
-                mensaje = ex.Message
-            });
-        }
-    }
+    }       
 
     [HttpPut("{id}/finalizar")]
     [Authorize(Roles = "Tecnico")]
@@ -251,7 +274,15 @@ public class TrabajoController : ControllerBase
     {
         try
         {
-            var resultado = await _trabajoService.FinalizarTrabajoAsync(id, dto);
+            if (dto.FechaFin < dto.FechaInicio)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "La fecha de finalización no puede ser anterior a la fecha de inicio."
+                });
+            }
+
+            var resultado = await _trabajoService.PendienteAprobacionTrabajoAsync(id, dto);
 
             if (!resultado)
                 return NotFound();
@@ -280,16 +311,12 @@ public class TrabajoController : ControllerBase
     {
         try
         {
-            var resultado =
-                await _trabajoService.AprobarTrabajoAsync(id);
+            var resultado = await _trabajoService.AprobarTrabajoAsync(id);
 
             if (!resultado)
                 return NotFound();
 
-            return Ok(new
-            {
-                mensaje = "Trabajo aprobado correctamente."
-            });
+            return Ok(new { mensaje = "Trabajo aprobado correctamente."});
         }
         catch (UnauthorizedAccessException)
         {

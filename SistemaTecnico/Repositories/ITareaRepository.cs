@@ -6,6 +6,7 @@ namespace SistemaTecnico.Repositories
     {
         Task<IEnumerable<Tarea>> ObtenerTodasAsync();
         Task<Tarea> ObtenerPorIdAsync(int id);
+        Task<IEnumerable<Tarea>> ObtenerPorSectorAsync(int sectorId);
 
     }
 }

@@ -20,5 +20,16 @@ namespace SistemaTecnico.Services
                 Nombre = x.Descripcion
             });
         }
+
+        public async Task<IEnumerable<ComboDTO>> ObtenerPorSectorAsync(int sectorId)
+        {
+            var tareas = await _repository.ObtenerPorSectorAsync(sectorId);
+
+            return tareas.Select(x => new ComboDTO
+            {
+                Id = x.Id,
+                Nombre = x.Descripcion
+            });
+        }
     }
 }

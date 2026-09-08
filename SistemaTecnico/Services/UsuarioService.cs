@@ -152,5 +152,10 @@ namespace SistemaTecnico.Services
                 ProvinciaId = x.Provincia.Id
             });
         }
+
+        public async Task<List<ComboDTO>> ObtenerTecnicosByClienteAsync(int idCliente)
+        {
+            return await _repository.ObtenerTecnicosByClienteAsync(idCliente);
+        }
     }
 }

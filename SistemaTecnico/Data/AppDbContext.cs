@@ -9,30 +9,20 @@ namespace SistemaTecnico.Data
             : base(options)
         {
         }
-
         public DbSet<Usuario> Usuarios => Set<Usuario>();
-
         public DbSet<Perfil> Perfiles => Set<Perfil>();
-
         public DbSet<Cliente> Clientes => Set<Cliente>();
-
         public DbSet<Provincia> Provincias => Set<Provincia>();
-
         public DbSet<Ciudad> Ciudades => Set<Ciudad>();
-
-        //public DbSet<Empresa> Empresas => Set<Empresa>();
-
-        //public DbSet<Sector> Sectores => Set<Sector>();
+        public DbSet<Sector> Sectores => Set<Sector>();
         public DbSet<Tarea> Tareas => Set<Tarea>();
-
         public DbSet<Trabajo> Trabajos => Set<Trabajo>();
-
         public DbSet<Imagen> Imagenes => Set<Imagen>();
-
         public DbSet<EstadoTrabajo> EstadosTrabajo => Set<EstadoTrabajo>();
         public DbSet<TrabajoImagenComparacion> TrabajoImagenComparaciones => Set<TrabajoImagenComparacion>();
         public DbSet<ErrorLog> ErrorLogs { get; set; }
         public DbSet<TrabajoFactura> TrabajoFacturas { get; set; }
+        public DbSet<Presupuesto> Presupuestos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -75,6 +65,19 @@ namespace SistemaTecnico.Data
                 .WithMany()
                 .HasForeignKey(x => x.ImagenDespuesId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Trabajo>()
+                .HasOne(x => x.Sector)
+                .WithMany()
+                .HasForeignKey(x => x.SectorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Sector>()
+                .HasOne(x => x.Perfil)
+                .WithMany()
+                .HasForeignKey(x => x.PerfilId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

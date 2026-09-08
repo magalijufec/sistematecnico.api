@@ -4,6 +4,7 @@ namespace SistemaTecnico.Services
 {
     public interface ITrabajoService
     {
+        Task<IEnumerable<TrabajoSolicitudDTO>> ObtenerSolicitudesDeTrabajoAsync();
         Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPagadosAsync();
         Task<IEnumerable<TrabajoResponseDto>> ObtenerTrabajosNoFinalizadosAsync();
         Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPendientesPagoAsync();
@@ -12,9 +13,12 @@ namespace SistemaTecnico.Services
         Task<bool> ActualizarAsync(int id, TrabajoUpdateDto dto);
         Task<bool> EliminarAsync(int id);
         Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos);
-        Task<bool> IniciarTrabajoAsync(int idTrabajo);
-        Task<bool> FinalizarTrabajoAsync(int idTrabajo, TrabajoRealizadoDTO dto);
+        Task<bool> PendienteAprobacionTrabajoAsync(int idTrabajo, TrabajoRealizadoDTO dto);
         Task<bool> AprobarTrabajoAsync(int idTrabajo);
+        Task<bool> CambiarEstadoTrabajoAsync(int idTrabajo, bool aprobado);
+        Task<bool> AsignarTecnicosAsync(int idTrabajo, List<int> tecnicosIds);
+        Task<bool> CargarMaterialesAsync(int idTrabajo, string materiales);
+        Task<bool> MaterialesEnviadosAsync(int idTrabajo);
         Task<RegistrarPagoFacturaResponseDto> RegistrarPagoAsync(int idTrabajo, int idFactura);
         Task<bool> SolicitarMejoraAsync(int id, SolicitarMejoraDTO dto);
         Task<byte[]> GenerarInformePdfAsync(int id);

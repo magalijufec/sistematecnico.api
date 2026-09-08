@@ -6,8 +6,7 @@ namespace SistemaTecnico.Repositories
     {
         Task<IEnumerable<Ciudad>> ObtenerTodasAsync();
 
-        Task<IEnumerable<Ciudad>> ObtenerPorProvinciaAsync(
-            int provinciaId);
+        Task<IEnumerable<Ciudad>> ObtenerPorProvinciaAsync(int provinciaId);
 
         Task<Ciudad?> ObtenerPorIdAsync(int id);
     }

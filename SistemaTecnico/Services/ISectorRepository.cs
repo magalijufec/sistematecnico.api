@@ -2,9 +2,8 @@
 
 namespace SistemaTecnico.Services
 {
-    public interface ITareaService
+    public interface ISectorService
     {
         Task<IEnumerable<ComboDTO>> ObtenerTodasAsync();
-        Task<IEnumerable<ComboDTO>> ObtenerPorSectorAsync(int sectorId);
     }
 }

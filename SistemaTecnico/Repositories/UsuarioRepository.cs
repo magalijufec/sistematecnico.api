@@ -118,5 +118,22 @@ namespace SistemaTecnico.Repositories
                 .OrderBy(x => x.NombreApellido)
                 .ToListAsync();
         }
+
+        public async Task<List<ComboDTO>>ObtenerTecnicosByClienteAsync(int idCliente)
+        {
+            Cliente cliente = await _context.Clientes.FirstOrDefaultAsync(x=> x.Id == idCliente);
+
+            return await _context.Usuarios
+                .Include(x => x.Provincia)
+                .Where(x => x.Activo && x.Perfil.Id == 7 && x.Provincia.Id == cliente.ProvinciaId)
+                .Select(x =>
+                    new ComboDTO
+                    {
+                        Id = x.Id,
+                        Nombre = x.NombreApellido
+                    })
+                .OrderBy(x => x.Nombre)
+                .ToListAsync();
+        }
     }
 }

@@ -20,5 +20,13 @@ namespace SistemaTecnico.Controllers
             return Ok(await _service.ObtenerTodasAsync());
         }
 
+        [HttpGet("sector/{sectorId}")]
+        public async Task<IActionResult> ObtenerPorSector(int sectorId)
+        {
+            var tareas = await _service.ObtenerPorSectorAsync(sectorId);
+
+            return Ok(tareas);
+        }
+
     }
 }

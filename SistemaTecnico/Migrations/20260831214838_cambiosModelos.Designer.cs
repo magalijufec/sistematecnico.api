@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaTecnico.Data;
 
@@ -11,9 +12,11 @@ using SistemaTecnico.Data;
 namespace SistemaTecnico.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260831214838_cambiosModelos")]
+    partial class cambiosModelos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -298,12 +301,12 @@ namespace SistemaTecnico.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PerfilId")
+                    b.Property<int?>("UsuarioId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PerfilId");
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Sectores");
                 });
@@ -370,9 +373,6 @@ namespace SistemaTecnico.Migrations
 
                     b.Property<int?>("TecnicoId")
                         .HasColumnType("int");
-
-                    b.Property<string>("TecnicosAsignados")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TrabajoRealizado")
                         .HasColumnType("nvarchar(max)");
@@ -583,13 +583,9 @@ namespace SistemaTecnico.Migrations
 
             modelBuilder.Entity("SistemaTecnico.Models.Sector", b =>
                 {
-                    b.HasOne("SistemaTecnico.Models.Perfil", "Perfil")
-                        .WithMany()
-                        .HasForeignKey("PerfilId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Perfil");
+                    b.HasOne("SistemaTecnico.Models.Usuario", null)
+                        .WithMany("Sectores")
+                        .HasForeignKey("UsuarioId");
                 });
 
             modelBuilder.Entity("SistemaTecnico.Models.Tarea", b =>
@@ -735,6 +731,11 @@ namespace SistemaTecnico.Migrations
                     b.Navigation("Facturas");
 
                     b.Navigation("SolicitudImagenes");
+                });
+
+            modelBuilder.Entity("SistemaTecnico.Models.Usuario", b =>
+                {
+                    b.Navigation("Sectores");
                 });
 #pragma warning restore 612, 618
         }

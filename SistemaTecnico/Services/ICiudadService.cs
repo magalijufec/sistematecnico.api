@@ -6,8 +6,7 @@ namespace SistemaTecnico.Services
     {
         Task<IEnumerable<ComboDTO>> ObtenerComboAsync();
 
-        Task<IEnumerable<ComboDTO>> ObtenerPorProvinciaAsync(
-            int provinciaId);
+        Task<IEnumerable<ComboDTO>> ObtenerPorProvinciaAsync(int provinciaId);
 
         Task<ComboDTO?> ObtenerPorIdAsync(int id);
     }

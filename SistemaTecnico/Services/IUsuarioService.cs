@@ -16,5 +16,6 @@ namespace SistemaTecnico.Services
 
         Task<bool> EliminarAsync(int id);
         Task<IEnumerable<TecnicoComboDTO>> ObtenerTecnicosAsync();
+        Task<List<ComboDTO>> ObtenerTecnicosByClienteAsync(int idCliente);
     }
 }

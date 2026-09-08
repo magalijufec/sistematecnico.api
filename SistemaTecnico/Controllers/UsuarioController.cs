@@ -84,5 +84,14 @@ namespace SistemaTecnico.Controllers
         {
             return Ok(await _service.ObtenerTecnicosAsync());
         }
+
+        [HttpGet("{idCliente:int}/tecnicos")]
+        public async Task<IActionResult> ObtenerTecnicosPorCliente(int idCliente)
+        {
+            var tecnicos =
+                await _service.ObtenerTecnicosByClienteAsync(idCliente);
+
+            return Ok(tecnicos);
+        }
     }
 }

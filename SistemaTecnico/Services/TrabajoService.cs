@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Text.Json;
 using QuestPDF.Fluent;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
@@ -18,6 +19,7 @@ namespace SistemaTecnico.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IEmailService _emailService;
         private readonly IImagenService _imagenService;
+        private readonly IPresupuestoRepository _presupuestoRepository;
 
         public TrabajoService(
             ITrabajoRepository trabajoRepository,
@@ -29,7 +31,8 @@ namespace SistemaTecnico.Services
             IWebHostEnvironment environment,
             IHttpContextAccessor httpContextAccessor,
             IEmailService emailService,
-            IImagenService imagenService)
+            IImagenService imagenService,
+            IPresupuestoRepository presupuestoRepository)
         {
             _trabajoRepository = trabajoRepository;
             _usuarioRepository = usuarioRepository;
@@ -41,6 +44,7 @@ namespace SistemaTecnico.Services
             _httpContextAccessor = httpContextAccessor;
             _emailService = emailService;
             _imagenService = imagenService;
+            _presupuestoRepository = presupuestoRepository;
         }
 
         private int ObtenerUsuarioIdActual()
@@ -103,12 +107,95 @@ namespace SistemaTecnico.Services
             return claim.Value;
         }
 
-        public async Task<IEnumerable<TrabajoResponseDto>> ObtenerTrabajosNoFinalizadosAsync()
+        public async Task<IEnumerable<TrabajoSolicitudDTO>> ObtenerSolicitudesDeTrabajoAsync()
         {
             var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
 
+            var usuarioId = ObtenerUsuarioIdActual();
+
+            var presupuestos = await _presupuestoRepository.ObtenerPorTecnicoAsync(usuarioId);
+
+            var trabajos2 = trabajos.ToList();
+
             return trabajos
-                .Where(t => t.Estado.Id != EstadosTrabajo.Pagado)
+                .Where(t => 
+                { 
+                    var presupuesto = presupuestos.FirstOrDefault(p => p.Trabajo.Id == t.Id);
+                    if (t.Estado.Id < EstadosTrabajo.EnProceso)
+                        return true;
+                    return presupuesto != null && presupuesto.Estado.Id != EstadosPresupuesto.Aprobado &&
+                           presupuesto.Estado.Id != EstadosPresupuesto.EnRevision;
+                })
+                .Select(t => { var presupuesto = presupuestos.FirstOrDefault(p => p.Trabajo.Id == t.Id);
+
+                    var estado = t.Estado.Nombre;
+                    var color =t.Estado.Color;
+                    var idEstado = t.Estado.Id;
+
+                    if (presupuesto != null && presupuesto.Estado.Id != EstadosPresupuesto.Aprobado &&
+                        presupuesto.Estado.Id != EstadosPresupuesto.EnRevision
+                    )
+                    {
+                        estado = presupuesto.Estado.Descripcion;
+                        //color = presupuesto.Estado.Color;
+                        idEstado = presupuesto.Estado.Id;
+                    }
+
+                    return new TrabajoSolicitudDTO
+                    {
+                        Id = t.Id,
+
+                        FechaSolicitud =
+                            t.FechaSolicitud,
+
+                        IdEstado =
+                            idEstado,
+
+                        Estado =
+                            estado,
+
+                        EstadoColor =
+                            color,
+
+                        IdCliente =
+                            t.Cliente.Id,
+
+                        Cliente =
+                            t.Cliente.NroCliente +
+                            " - " +
+                            t.Cliente.Nombre,
+
+                        IdSector =
+                            t.Sector.Id,
+
+                        Sector =
+                            t.Sector.Nombre,
+
+                        IdTarea =
+                            t.Tarea.Id,
+
+                        Tarea =
+                            t.Tarea.Descripcion,
+
+                        Provincia =
+                            t.Cliente.Provincia.Nombre,
+
+                        Ciudad =
+                            t.Cliente.Ciudad.Nombre
+                    };
+                })
+                .OrderByDescending(x => x.FechaSolicitud);
+        }
+
+        public async Task<IEnumerable<TrabajoResponseDto>> ObtenerTrabajosNoFinalizadosAsync()
+        {
+            var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+
+            return trabajos
+                .Where(t => (t.Estado.Id >= EstadosTrabajo.MaterialesEnviados && t.Estado.Id != EstadosTrabajo.Finalizado && rol != "Tecnico")
+                || (t.Estado.Id >= EstadosTrabajo.MaterialesEnviados && t.Estado.Id != EstadosTrabajo.Finalizado && 
+                t.Tecnico?.Id == usuarioId && rol == "Tecnico"))
                 .Select(t => new TrabajoResponseDto
                 {
                     Id = t.Id,
@@ -119,17 +206,46 @@ namespace SistemaTecnico.Services
                     EstadoColor = t.Estado.Color,
                     IdCliente = t.Cliente.Id,
                     Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
-                    IdTecnico = t.Tecnico.Id,
-                    Tecnico = t.Tecnico.NombreApellido,
+                    IdsTecnicos = ConvertirTecnicosAsignados(t.TecnicosAsignados),
+                    Tecnico = t.Tecnico?.NombreApellido,
                     IdTarea = t.Tarea.Id,
                     Tarea = t.Tarea.Descripcion,
                     TrabajoRealizado = t.TrabajoRealizado,
                     Provincia = t.Cliente.Provincia.Nombre,
                     Ciudad = t.Cliente.Ciudad.Nombre,
                     TieneFactura = t.Facturas.Any()
-
                 })
                 .OrderByDescending(t => t.FechaSolicitud);
+        }
+
+        private static List<int> ConvertirTecnicosAsignados(string? tecnicosAsignados)
+        {
+            if (string.IsNullOrWhiteSpace(tecnicosAsignados))
+            {
+                return new List<int>();
+            }
+
+            return tecnicosAsignados
+                .Trim()
+                .Trim('[', ']')
+                .Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries |
+                    StringSplitOptions.TrimEntries
+                )
+                .Select(valor =>
+                {
+                    return int.TryParse(
+                        valor,
+                        out var idTecnico
+                    )
+                        ? (int?)idTecnico
+                        : null;
+                })
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
         }
 
         private async Task<IEnumerable<Trabajo>> ObtenerTrabajosSegunUsuarioAsync()
@@ -139,38 +255,30 @@ namespace SistemaTecnico.Services
 
             // ADMINISTRADOR Y SISTEMAS
             // Pueden ver todos
-            if (rol == "Administrador" ||
-                rol == "Sistemas")
+            if (rol == "Administrador" || rol == "Sistemas")
             {
-                return await _trabajoRepository
-                    .ObtenerTodosAsync();
+                return await _trabajoRepository.ObtenerTodosAsync();
             }
 
             // TÉCNICO
             // Solo ve sus propios trabajos
             if (rol == "Tecnico")
             {
-                return await _trabajoRepository
-                    .ObtenerPorTecnicoAsync(usuarioId);
+                return await _trabajoRepository.ObtenerPorTecnicoAsync(usuarioId);
             }
 
             // FARMACIA
             // Solo ve los trabajos de su cliente
             if (rol == "Farmacia")
             {
-                var usuario = await _usuarioRepository
-                    .ObtenerPorIdAsync(usuarioId);
+                var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId);
 
-                if (usuario == null ||
-                    usuario.Cliente.Id == null)
+                if (usuario == null || usuario.Cliente.Id == null)
                 {
                     return Enumerable.Empty<Trabajo>();
                 }
 
-                return await _trabajoRepository
-                    .ObtenerPorClienteAsync(
-                        usuario.Cliente.Id
-                    );
+                return await _trabajoRepository.ObtenerPorClienteAsync(usuario.Cliente.Id);
             }
 
             // PAGOS
@@ -178,8 +286,7 @@ namespace SistemaTecnico.Services
             // Después podemos crear un filtro específico
             if (rol == "Pagos")
             {
-                return await _trabajoRepository
-                    .ObtenerTodosAsync();
+                return await _trabajoRepository.ObtenerTodosAsync();
             }
 
             return Enumerable.Empty<Trabajo>();
@@ -232,7 +339,7 @@ namespace SistemaTecnico.Services
                 await ObtenerTrabajosSegunUsuarioAsync();
 
             return trabajos
-                .Where(t => t.Estado.Id == EstadosTrabajo.Pagado)
+                .Where(t => t.Estado.Id == EstadosTrabajo.Finalizado)
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
@@ -278,97 +385,58 @@ namespace SistemaTecnico.Services
 
         public async Task<TrabajoResponseDto?> ObtenerPorIdAsync(int id)
         {
-            var t =
-                await _trabajoRepository.ObtenerPorIdAsync(id);
+            var t = await _trabajoRepository.ObtenerPorIdAsync(id);
 
             if (t == null)
                 return null;
 
-            var usuarioId =
-                ObtenerUsuarioIdActual();
-
-            var rol =
-                ObtenerRolActual();
+            var usuarioId = ObtenerUsuarioIdActual();
+            var rol = ObtenerRolActual();
 
             // Administrador y Sistemas
             // pueden acceder a cualquier trabajo
             if (rol != "Administrador" && rol != "Sistemas")
             {
                 // Técnico
-                if (rol == "Tecnico" &&
-                    t.Tecnico.Id != usuarioId)
-                {
-                    return null;
-                }
+                //if (rol == "Tecnico" && t.Tecnico.Id != usuarioId)
+                //{
+                //    return null;
+                //}
 
                 // Farmacia
                 if (rol == "Farmacia")
                 {
-                    var usuario =
-                        await _usuarioRepository
-                            .ObtenerPorIdAsync(usuarioId);
+                    var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId);
 
-                    if (usuario == null ||
-                        usuario.Cliente.Id == null ||
-                        t.Cliente.Id != usuario.Cliente.Id)
+                    if (usuario == null || usuario.Cliente.Id == null || t.Cliente.Id != usuario.Cliente.Id)
                     {
                         return null;
                     }
                 }
             }
 
-            var idsComparacion = t.ComparacionesImagenes
-                                    .SelectMany(c => new int?[]
-                                    {
-                                        c.ImagenAntesId,
-                                        c.ImagenDespuesId
-                                    })
-                                    .Where(x => x.HasValue)
-                                    .Select(x => x!.Value)
-                                    .ToHashSet();
-
             return new TrabajoResponseDto
             {
                 Id = t.Id,
-
-                FechaSolicitud =
-                    t.FechaSolicitud,
-
-                FechaInicio =
-                    t.FechaInicio,
-
-                Estado =
-                    t.Estado.Nombre,
-
-                EstadoColor =
-                    t.Estado.Color,
-
-                IdCliente =
-                    t.Cliente.Id,
-
-                Cliente =
-                    t.Cliente.Nombre,
-
-                IdTecnico =
-                    t.Tecnico.Id,
-
-                Tecnico =
-                    t.Tecnico.NombreApellido,
-
-                IdTarea =
-                    t.Tarea.Id,
-
-                Tarea =
-                    t.Tarea.Descripcion,
-
-                Comentarios =
-                    t.Comentarios,
-
-                TrabajoRealizado =
-                    t.TrabajoRealizado,
-
+                FechaSolicitud = t.FechaSolicitud,
+                FechaInicio = t.FechaInicio,
+                FechaFinalizado = t.FechaFinalizado,
+                Estado = t.Estado.Nombre,
+                EstadoColor = t.Estado.Color,
+                IdEstado = t.Estado.Id,
+                IdCliente = t.Cliente.Id,
+                Cliente = t.Cliente.Nombre,
+                IdsTecnicos = ConvertirTecnicosAsignados(t.TecnicosAsignados),
+                Tecnico = t.Tecnico?.NombreApellido ?? " - ",
+                Provincia = t.Cliente.Provincia.Nombre,
+                Ciudad = t.Cliente.Ciudad.Nombre,  
+                Direccion = t.Cliente.Direccion ?? " - ",
+                Sector = t.Sector.Nombre,
+                IdTarea = t.Tarea.Id,                
+                Tarea = t.Tarea.Descripcion,
+                Comentarios = t.Comentarios,
+                TrabajoRealizado = t.TrabajoRealizado,
                 TieneFactura = t.Facturas.Any(),
-
                 Facturas =
                     t.Facturas
                         .Select(x => new TrabajoFacturaDto
@@ -379,7 +447,6 @@ namespace SistemaTecnico.Services
                             FechaPagado = x.FechaPagado
                         })
                         .ToList(),
-
                 ImagenesSolicitud =
                     t.SolicitudImagenes
                         .Select(x => new ImagenDTO
@@ -387,46 +454,41 @@ namespace SistemaTecnico.Services
                             Id = x.Id,
                             RutaArchivo = x.RutaArchivo
                         }).ToList(),
-
-                Solicitante = t.UsuarioCreacion?.NombreApellido
+                Solicitante = t.UsuarioCreacion?.NombreApellido,
+                Materiales = t.Materiales
             };
         }
 
         public async Task<TrabajoResponseDto> CrearAsync(TrabajoCreateDto dto)
         {
-            var tecnicoExiste = await _usuarioRepository.ExisteAsync(dto.IdTecnico);
-
-            if (!tecnicoExiste)
-                throw new Exception($"El técnico con ID {dto.IdTecnico} no existe.");
-
             if (!await _clienteRepository.ExisteAsync(dto.IdCliente))
                 throw new Exception("El cliente no existe.");
 
-            var usuarioId = int.Parse(
-                                    _httpContextAccessor.HttpContext!
-                                        .User
-                                        .FindFirst(ClaimTypes.NameIdentifier)!
-                                        .Value
-                                );
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+            EstadoTrabajo estado = null;
+
+            if (rol == "Sistemas" || rol == "Mantenimiento" || rol == "Monitoreo")
+                estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendientePresupuestos);
+            else
+                estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteRevisionSector);
 
             var trabajo = new Trabajo
             {
                 FechaSolicitud = DateTime.UtcNow,
-                Tecnico = await _usuarioRepository.ObtenerPorIdActivoAsync(dto.IdTecnico),
                 Cliente = await _clienteRepository.ObtenerPorIdAsync(dto.IdCliente),
+                SectorId = dto.IdSector,
                 Tarea = await _tareaRepository.ObtenerPorIdAsync(dto.IdTarea),
                 Comentarios = dto.Comentarios,
-                Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Pendiente),
-                UsuarioCreacion = await _usuarioRepository.ObtenerPorIdActivoAsync(usuarioId)
+                Estado = estado,
+                UsuarioCreacion = await _usuarioRepository.ObtenerPorIdActivoAsync(usuarioId),
+                TecnicosAsignados = string.Join(",",dto.IdsTecnicos)
             };
 
             await _trabajoRepository.AgregarAsync(trabajo);
             await _trabajoRepository.GuardarCambiosAsync();
 
-            if (dto.Archivos != null && dto.Archivos.Count > 0)
-            {
-                await _imagenService.SubirImagenes(trabajo.Id, dto.Archivos);
-            }
+            if (dto.Archivos != null && dto.Archivos.Count > 0)            
+                await _imagenService.SubirImagenes(trabajo.Id, dto.Archivos);            
 
             if (!string.IsNullOrWhiteSpace(trabajo.Tecnico?.Email))
             {
@@ -439,8 +501,7 @@ namespace SistemaTecnico.Services
                     html);
             }
 
-            return await ObtenerPorIdAsync(trabajo.Id)
-                   ?? throw new Exception("Error al recuperar el trabajo creado.");
+            return await ObtenerPorIdAsync(trabajo.Id) ?? throw new Exception("Error al recuperar el trabajo creado.");
         }
 
         public async Task<bool> ActualizarAsync(int id, TrabajoUpdateDto dto)
@@ -467,6 +528,22 @@ namespace SistemaTecnico.Services
             return true;
         }
 
+        public async Task<bool> CargarMaterialesAsync(int idTrabajo, string materiales)
+        {
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            trabajo.Materiales = materiales;
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteMateriales);
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
+        }
+
         public async Task<bool> EliminarAsync(int id)
         {
             var trabajo = await _trabajoRepository.ObtenerPorIdAsync(id);
@@ -481,56 +558,7 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task<bool> IniciarTrabajoAsync(int idTrabajo)
-        {
-            var (usuarioId, rol) = ObtenerUsuarioActual();
-
-            if (rol != "Tecnico")
-                throw new UnauthorizedAccessException(
-                    "Solo un técnico puede iniciar un trabajo."
-                );
-
-            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
-
-            if (trabajo == null)
-                return false;
-
-            if (trabajo.Tecnico.Id != usuarioId)
-                throw new UnauthorizedAccessException(
-                    "El trabajo no está asignado a este técnico."
-                );
-
-            if (trabajo.Estado.Id != 1)
-                throw new InvalidOperationException(
-                    "El trabajo no se encuentra en estado Pendiente."
-                );
-
-            trabajo.FechaInicio = DateTime.UtcNow;
-
-            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.EnProceso);
-            trabajo.Estado = estado;
-
-            //envia mail al usuario de sistemas que asigno el trabajo
-
-            if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
-            {
-                var html = TrabajoEmailTemplates.TrabajoIniciado(trabajo.Tecnico.NombreApellido, trabajo.Id,
-                    $"{trabajo.Cliente?.NroCliente} {trabajo.Cliente?.Nombre}", trabajo.Tarea.Descripcion);
-
-                await _emailService.EnviarAsync(
-                    trabajo.Tecnico?.Email,
-                    $"Trabajo iniciado #{trabajo.Id}",
-                    html);
-            }
-
-            await _trabajoRepository.ActualizarAsync(trabajo);
-
-            await _trabajoRepository.GuardarCambiosAsync();
-
-            return true;
-        }
-
-        public async Task<bool> FinalizarTrabajoAsync(int idTrabajo, TrabajoRealizadoDTO dto)
+        public async Task<bool> PendienteAprobacionTrabajoAsync(int idTrabajo, TrabajoRealizadoDTO dto)
         {
             var (usuarioId, rol) = ObtenerUsuarioActual();
 
@@ -550,7 +578,7 @@ namespace SistemaTecnico.Services
                     "El trabajo no está asignado a este técnico."
                 );
 
-            if (trabajo.Estado.Id != 2)
+            if (trabajo.Estado.Id != EstadosTrabajo.EnProceso)
                 throw new InvalidOperationException(
                     "El trabajo debe estar En proceso."
                 );
@@ -562,10 +590,10 @@ namespace SistemaTecnico.Services
                 );
             }
 
-            EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.TrabajoFinalizado);
-            trabajo.Estado = estado;
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteAprobacionTrabajo);
             trabajo.TrabajoRealizado = dto.TrabajoRealizado;
-            trabajo.FechaFinalizado = DateTime.UtcNow;
+            trabajo.FechaInicio = dto.FechaInicio;
+            trabajo.FechaFinalizado = dto.FechaFin;
 
             await _trabajoRepository.ActualizarAsync(trabajo);
 
@@ -639,6 +667,77 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.ActualizarAsync(trabajo);
 
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
+        }
+
+        public async Task<bool> CambiarEstadoTrabajoAsync(int idTrabajo, bool aprobado)
+        {
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Estado.Id != EstadosTrabajo.PendienteRevisionSector)
+                throw new InvalidOperationException("El trabajo debe estar en pendiente revision sector.");
+
+            if (aprobado)
+                trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteAsignacionTecnicos);
+            else            
+                trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.SolicitudRechazada);
+            
+            
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
+        }
+
+        public async Task<bool> MaterialesEnviadosAsync(int idTrabajo)
+        {
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Estado.Id != EstadosTrabajo.PendienteMateriales)
+                throw new InvalidOperationException("El trabajo debe estar en PendienteMateriales.");
+
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.EnProceso);
+
+            await _trabajoRepository.ActualizarAsync(trabajo);
+
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            return true;
+        }
+
+        public async Task<bool> AsignarTecnicosAsync(int idTrabajo, List<int> tecnicosIds)
+        {
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+                return false;
+
+            if (trabajo.Estado.Id != EstadosTrabajo.PendienteAsignacionTecnicos &&
+                trabajo.Estado.Id != EstadosTrabajo.PendienteRevisionSector
+            )
+            {
+                throw new InvalidOperationException("El trabajo debe estar en PendienteAsignacionTecnicos o PendienteRevisionSector.");
+            }
+
+            if (tecnicosIds == null || tecnicosIds.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "Debe seleccionar al menos un técnico."
+                );
+            }
+
+            trabajo.TecnicosAsignados = string.Join(",", tecnicosIds);
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendientePresupuestos);
+            await _trabajoRepository.ActualizarAsync(trabajo);
             await _trabajoRepository.GuardarCambiosAsync();
 
             return true;
@@ -809,22 +908,13 @@ namespace SistemaTecnico.Services
                  * Solamente marca la transición final
                  * si el trabajo todavía no estaba finalizado.
                  */
-                if (
-                    trabajo.Estado.Id !=
-                        EstadosTrabajo.Pagado
-                )
+                if (trabajo.Estado.Id != EstadosTrabajo.Finalizado)
                 {
-                    trabajo.FechaPagado =
-                        DateTime.UtcNow;
+                    trabajo.FechaPagado = DateTime.UtcNow;
 
-                    trabajo.Estado =
-                        await _estadoRepository
-                            .ObtenerPorIdAsync(
-                                EstadosTrabajo.Pagado
-                            );
+                    trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Finalizado);
 
-                    enviarCorreoFinalizacion =
-                        true;
+                    enviarCorreoFinalizacion = true;
                 }
             }
             else
@@ -842,11 +932,9 @@ namespace SistemaTecnico.Services
                     null;
             }
 
-            await _trabajoRepository
-                .ActualizarAsync(trabajo);
+            await _trabajoRepository.ActualizarAsync(trabajo);
 
-            await _trabajoRepository
-                .GuardarCambiosAsync();
+            await _trabajoRepository.GuardarCambiosAsync();
 
             /*
              * El correo solo se envía cuando el pago
@@ -917,10 +1005,10 @@ namespace SistemaTecnico.Services
             if (trabajo == null)
                 return false;
 
-            if (trabajo.Estado.Id != EstadosTrabajo.TrabajoFinalizado)
+            if (trabajo.Estado.Id != EstadosTrabajo.PendienteAprobacionTrabajo)
             {
                 throw new InvalidOperationException(
-                    "Solo se puede solicitar una mejora cuando el trabajo está finalizado."
+                    "Solo se puede solicitar una mejora cuando el trabajo está PendienteAprobacionTrabajo."
                 );
             }
 
@@ -933,7 +1021,7 @@ namespace SistemaTecnico.Services
 
             trabajo.Comentarios = dto.Comentario.Trim();
 
-            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Pendiente);
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.MejoraSolicitada);
 
             // El trabajo realizado anterior puede quedar
             // registrado hasta que el técnico lo reemplace.
@@ -990,11 +1078,10 @@ namespace SistemaTecnico.Services
             if (trabajo == null)
                 throw new KeyNotFoundException($"No existe el trabajo #{id}.");
 
-            if (trabajo.Estado == null ||
-                trabajo.Estado.Id < EstadosTrabajo.TrabajoFinalizado)
+            if (trabajo.Estado == null || trabajo.Estado.Id < EstadosTrabajo.PendienteAprobacionTrabajo)
             {
                 throw new InvalidOperationException(
-                    "El informe PDF solamente está disponible cuando el trabajo está finalizado."
+                    "El informe PDF solamente está disponible cuando el trabajo está PendienteAprobacionTrabajo."
                 );
             }
 

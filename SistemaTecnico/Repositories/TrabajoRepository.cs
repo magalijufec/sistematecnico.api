@@ -11,8 +11,7 @@ public class TrabajoRepository : ITrabajoRepository
 {
     private readonly AppDbContext _context;
 
-    public TrabajoRepository(
-            AppDbContext context)
+    public TrabajoRepository(AppDbContext context)
     {
         _context = context;
     }
@@ -21,31 +20,37 @@ public class TrabajoRepository : ITrabajoRepository
     {
         return await _context.Trabajos
             .Include(t => t.Cliente)
-            .Include(t => t.Tecnico)
             .Include(t => t.Estado)
             .Include(t => t.Cliente.Provincia)
             .Include(t => t.Cliente.Ciudad)
-            .Include(x => x.Facturas)
+            .Include(t => t.Facturas)
             .Include(t => t.SolicitudImagenes)
+            .Include(t => t.ComparacionesImagenes)
+            .Include(t => t.Sector)
             .Include(t => t.Tarea)
+            .Include(t => t.Tecnico)
+            .Include(t => t.UsuarioCreacion)
             .AsNoTracking()
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Trabajo>> ObtenerPorTecnicoAsync(int idTecnico)
+    public async Task<IEnumerable<Trabajo>>ObtenerPorTecnicoAsync(int idTecnico)
     {
-        return await _context.Trabajos
-            .Include(t => t.Cliente)
-            .Include(t => t.Tecnico)
-            .Include(t => t.Estado)
-            .Include(t => t.Cliente.Provincia)
-            .Include(t => t.Cliente.Ciudad)
-            .Include(x => x.Facturas)
-            .Include(t => t.SolicitudImagenes)
-            .Include(t => t.Tarea)
-            .Where(t => t.Tecnico.Id == idTecnico)
-            .AsNoTracking()
-            .ToListAsync();
+        var trabajos = await _context.Trabajos
+                .Include(t => t.Cliente)
+                .Include(t => t.Tecnico)
+                .Include(t => t.Estado)
+                .Include(t => t.Cliente.Provincia)
+                .Include(t => t.Cliente.Ciudad)
+                .Include(t => t.Facturas)
+                .Include(t => t.SolicitudImagenes)
+                .Include(t => t.Sector)
+                .Include(t => t.Tarea)
+                .AsNoTracking()
+                .ToListAsync();
+
+        return trabajos.Where(t => !string.IsNullOrWhiteSpace(t.TecnicosAsignados) &&        
+            t.TecnicosAsignados.Split(',').Contains(idTecnico.ToString()));
     }
 
     public async Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(int idCliente)
@@ -58,6 +63,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Cliente.Ciudad)
             .Include(x => x.Facturas)
             .Include(t => t.Tarea)
+            .Include(t => t.Sector)
             .Include(t => t.SolicitudImagenes)
             .Where(t => t.Cliente.Id == idCliente)
             .AsNoTracking()
@@ -74,6 +80,7 @@ public class TrabajoRepository : ITrabajoRepository
             .Include(t => t.Cliente.Ciudad)
             .Include(t => t.ComparacionesImagenes)
             .Include(t => t.SolicitudImagenes)
+            .Include(t => t.Sector)
             .Include(t => t.Tarea)
             .Include(x => x.Facturas)
             .Include(t => t.UsuarioCreacion)
@@ -134,21 +141,41 @@ public class TrabajoRepository : ITrabajoRepository
     public async Task RegistrarPagoAsync(int idTrabajo)
     {
         var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
+
         if (trabajo == null)
-            throw new KeyNotFoundException(
-                $"No existe el trabajo con ID {idTrabajo}");
+            throw new KeyNotFoundException($"No existe el trabajo con ID {idTrabajo}");
 
         trabajo.FechaPagado = DateTime.UtcNow;
-        var estado = await _context.EstadosTrabajo.FindAsync(EstadosTrabajo.Pagado); 
-        trabajo.Estado = estado;
-
+        trabajo.Estado = await _context.EstadosTrabajo.FindAsync(EstadosTrabajo.Finalizado); 
         await _context.SaveChangesAsync();
     }
 
-    public async Task SubirFacturasAsync(
-        int idTrabajo,
-        IFormFile[] archivos,
-        IWebHostEnvironment env)
+    public async Task CambiarEstadoAsync(int idTrabajo, int idEstado)
+    {
+        var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
+
+        if (trabajo == null)
+            throw new KeyNotFoundException($"No existe el trabajo con ID {idTrabajo}");
+
+        trabajo.EstadoId = idEstado;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ActualizarPresupuestoAsync(int id, PresupuestoDecisionDTO dto, int tecnicoId) 
+    {     
+        var trabajo = await _context.Trabajos.FindAsync(id);
+
+        if (trabajo == null)
+            throw new KeyNotFoundException($"No existe el trabajo con ID {id}");
+
+        trabajo.Tecnico = await _context.Usuarios.FindAsync(tecnicoId);
+        trabajo.EstadoId = EstadosTrabajo.PresupuestoAprobado;
+
+        await ActualizarAsync(trabajo);
+        await GuardarCambiosAsync();
+    }
+
+    public async Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos, IWebHostEnvironment env)
     {
         if (
             archivos == null ||

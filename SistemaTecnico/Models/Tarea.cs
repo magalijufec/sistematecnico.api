@@ -6,6 +6,7 @@
 
         public string Descripcion { get; set; } = string.Empty;
 
-        //public ICollection<Trabajo> Trabajos { get; set; } = new List<Trabajo>();
+        public int SectorId { get; set; }
+        public Sector Sector { get; set; }
     }
 }

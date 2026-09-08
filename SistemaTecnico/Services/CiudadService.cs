@@ -25,12 +25,9 @@ namespace SistemaTecnico.Services
             });
         }
 
-        public async Task<IEnumerable<ComboDTO>> ObtenerPorProvinciaAsync(
-            int provinciaId)
+        public async Task<IEnumerable<ComboDTO>> ObtenerPorProvinciaAsync(int provinciaId)
         {
-            var ciudades =
-                await _repository.ObtenerPorProvinciaAsync(
-                    provinciaId);
+            var ciudades = await _repository.ObtenerPorProvinciaAsync(provinciaId);
 
             return ciudades.Select(x => new ComboDTO
             {

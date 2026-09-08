@@ -24,5 +24,13 @@ namespace SistemaTecnico.Repositories
             return await _context.Tareas
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Tarea>> ObtenerPorSectorAsync(int sectorId)
+        {
+            return _context.Tareas
+                .Where(x => x.SectorId == sectorId)
+                .OrderBy(x => x.Descripcion)
+                .ToList();
+        }
     }
 }

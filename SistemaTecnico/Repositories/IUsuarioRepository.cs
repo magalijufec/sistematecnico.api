@@ -26,6 +26,7 @@ namespace SistemaTecnico.Repositories
         Task GuardarCambiosAsync();
 
         Task<IEnumerable<Usuario>> ObtenerTecnicosAsync();
+        Task<List<ComboDTO>> ObtenerTecnicosByClienteAsync(int idCliente);
         Task<IEnumerable<Usuario>> ObtenerPorPerfil(int idPerfil);
     }
 }
