@@ -27,5 +27,6 @@
         public string Solicitante { get; set; }
         public List<ImagenDTO>? ImagenesSolicitud { get; set; }
         public string? Materiales { get; set; }
+        public PresupuestoAprobadoDTO? PresupuestoAprobado { get; set; }
     }
 }

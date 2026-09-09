@@ -305,8 +305,8 @@ public class TrabajoController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador,Sistemas,Monitoreo,Mantenimiento")]
     [HttpPut("{id}/aprobar")]
-    [Authorize(Roles = "Sistemas,Mantenimiento,Monitoreo,Administrador")]
     public async Task<IActionResult> AprobarTrabajo(int id)
     {
         try

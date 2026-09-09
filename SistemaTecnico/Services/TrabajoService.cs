@@ -403,29 +403,27 @@ namespace SistemaTecnico.Services
             // Obtener comparaciones
             var comparaciones = await _trabajoImagenComparacionRepository.ObtenerPorTrabajoAsync(id);
 
-            var idsImagenesComparacion =
-                comparaciones?
-                    .SelectMany(c => new int?[]
+            var idsImagenesComparacion = comparaciones?.SelectMany(c => new int?[]
                     {
-                c.ImagenAntesId,
-                c.ImagenDespuesId
+                        c.ImagenAntesId,
+                        c.ImagenDespuesId
                     })
                     .Where(x => x.HasValue)
                     .Select(x => x!.Value)
                     .ToHashSet()
                 ?? new HashSet<int>();
 
-            // Administrador y Sistemas
-            // pueden acceder a cualquier trabajo
             if (rol != "Administrador" && rol != "Sistemas" && rol != "Mantenimiento" && rol != "Monitoreo")
             {
                 if (rol == "Farmacia")
                 {
                     var usuario = await _usuarioRepository .ObtenerPorIdAsync(usuarioId);
-                    if (usuario == null || usuario.Cliente.Id == null || t.Cliente.Id != usuario.Cliente.Id)
+                    if (usuario == null || usuario.Cliente?.Id == null || t.Cliente.Id != usuario.Cliente.Id)
                         return null;                    
                 }
             }
+
+            List<Presupuesto> presupuestos = await _presupuestoRepository.ObtenerPorTrabajoAsync(id);
 
             return new TrabajoResponseDto
             {
@@ -458,7 +456,6 @@ namespace SistemaTecnico.Services
                             FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
                             FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado)
                         }).ToList(),
-
                 // SOLO imágenes de solicitud
                 ImagenesSolicitud = t.SolicitudImagenes
                         .Where(x =>
@@ -471,7 +468,13 @@ namespace SistemaTecnico.Services
                             RutaArchivo = x.RutaArchivo
                         }).ToList(),
                 Solicitante = t.UsuarioCreacion?.NombreApellido,
-                Materiales = t.Materiales
+                Materiales = t.Materiales,
+                PresupuestoAprobado = presupuestos.Where(p => p.EstadoId == EstadosPresupuesto.Aprobado)
+                .Select(p => new PresupuestoAprobadoDTO
+                {
+                    Tecnico = p.Tecnico.NombreApellido,
+                    Archivo = p.RutaArchivo
+                }).FirstOrDefault()
             };
         }
 
@@ -647,20 +650,14 @@ namespace SistemaTecnico.Services
         {
             var (usuarioId, rol) = ObtenerUsuarioActual();
 
-            if (rol != "Sistemas" && rol != "Administrador")
-            {
-                throw new UnauthorizedAccessException("Solo Sistemas o Administrador pueden aprobar el trabajo.");
-            }
-
             var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
 
             if (trabajo == null)
                 return false;
 
-            if (trabajo.Estado.Id != 3)
-                throw new InvalidOperationException("El trabajo debe estar en estado Trabajo finalizado.");
+            if (trabajo.Estado.Id != EstadosTrabajo.PendienteAprobacionTrabajo)
+                throw new InvalidOperationException("El trabajo debe estar en estado PendienteAprobacionTrabajo.");
 
-            trabajo.FechaFinalizado = DateTime.UtcNow;
             EstadoTrabajo estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.Aprobado);
             trabajo.Estado = estado;
 
