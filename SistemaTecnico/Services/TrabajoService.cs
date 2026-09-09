@@ -319,8 +319,8 @@ namespace SistemaTecnico.Services
                 {
                     Id = t.Id,
                     FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
-                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio.Value),
-                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado.Value),
+                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio),
+                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado),
                     IdCliente = t.Cliente.Id,
                     Cliente =
                         t.Cliente.NroCliente +
@@ -340,7 +340,7 @@ namespace SistemaTecnico.Services
                                 Id = x.Id,
                                 RutaArchivo = x.RutaArchivo,
                                 FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
-                                FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado.Value)
+                                FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado)
                             })
                             .ToList(),
                                     })
@@ -360,9 +360,9 @@ namespace SistemaTecnico.Services
                 {
                     Id = t.Id,
                     FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
-                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio.Value),
-                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado.Value),
-                    FechaPagado = FechaHelper.AhoraArgentina(t.FechaPagado.Value),
+                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio),
+                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado),
+                    FechaPagado = FechaHelper.AhoraArgentina(t.FechaPagado),
                     IdCliente = t.Cliente.Id,
                     Cliente =
                         t.Cliente.NroCliente +
@@ -431,8 +431,8 @@ namespace SistemaTecnico.Services
             {
                 Id = t.Id,
                 FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
-                FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio.Value),
-                FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado.Value),
+                FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio),
+                FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado),
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
                 IdEstado = t.Estado.Id,
@@ -456,7 +456,7 @@ namespace SistemaTecnico.Services
                             Id = x.Id,
                             RutaArchivo = x.RutaArchivo,
                             FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
-                            FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado.Value)
+                            FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado)
                         }).ToList(),
 
                 // SOLO imágenes de solicitud
@@ -982,8 +982,7 @@ namespace SistemaTecnico.Services
                 FacturaId =
                     factura.Id,
 
-                FechaPagadoFactura =
-                    FechaHelper.AhoraArgentina(factura.FechaPagado!.Value),
+                FechaPagadoFactura = FechaHelper.AhoraArgentina(factura.FechaPagado),
 
                 TrabajoFinalizado =
                     todasPagadas,

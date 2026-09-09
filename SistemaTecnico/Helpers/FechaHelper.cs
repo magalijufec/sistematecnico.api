@@ -7,9 +7,14 @@
             return DateTime.UtcNow.AddHours(-3);
         }
         
-        public static DateTime AhoraArgentina(DateTime utcDateTime)
+        public static DateTime? AhoraArgentina(DateTime? fechaUtc)
         {
-            return utcDateTime.AddHours(-3);
+            return fechaUtc?.AddHours(-3);
         }
-}
+
+        public static DateTime AhoraArgentina(DateTime fechaUtc)
+        {
+            return fechaUtc.AddHours(-3);
+        }
+    }
 }
