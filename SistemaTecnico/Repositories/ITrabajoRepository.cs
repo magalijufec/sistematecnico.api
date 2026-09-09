@@ -6,6 +6,7 @@ namespace SistemaTecnico.Repositories;
 public interface ITrabajoRepository
 {
     Task<IEnumerable<Trabajo>> ObtenerTodosAsync();
+    Task<IEnumerable<Trabajo>> ObtenerPorPerfilAsync(int idPerfil);
     Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(int idCliente);
     Task<Trabajo?> ObtenerPorIdAsync(int id);
     Task AgregarAsync(Trabajo trabajo);

@@ -60,7 +60,7 @@ public class TrabajoController : ControllerBase
         return Ok(trabajo);
     }
 
-    [Authorize(Roles = "Administrador,Sistemas,Farmacia")]
+    [Authorize(Roles = "Administrador,Sistemas,Monitoreo,Mantenimiento,Farmacia")]
     [HttpPost]
     public async Task<IActionResult> Post([FromForm] TrabajoCreateDto dto)
     {
@@ -306,7 +306,7 @@ public class TrabajoController : ControllerBase
     }
 
     [HttpPut("{id}/aprobar")]
-    [Authorize(Roles = "Sistemas,Administrador")]
+    [Authorize(Roles = "Sistemas,Mantenimiento,Monitoreo,Administrador")]
     public async Task<IActionResult> AprobarTrabajo(int id)
     {
         try
@@ -332,7 +332,7 @@ public class TrabajoController : ControllerBase
     }
 
     [HttpPut("{id}/solicitar-mejora")]
-    [Authorize(Roles = "Sistemas")]
+    [Authorize(Roles = "Sistemas,Mantenimiento,Monitoreo")]
     public async Task<IActionResult> SolicitarMejora(int id,SolicitarMejoraDTO dto)
     {
         try

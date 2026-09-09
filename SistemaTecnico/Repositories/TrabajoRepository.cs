@@ -34,6 +34,26 @@ public class TrabajoRepository : ITrabajoRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Trabajo>> ObtenerPorPerfilAsync(int idPerfil)
+    {
+        var trabajos = await _context.Trabajos
+                .Include(t => t.Cliente)
+                .Include(t => t.Estado)
+                .Include(t => t.Cliente.Provincia)
+                .Include(t => t.Cliente.Ciudad)
+                .Include(t => t.Facturas)
+                .Include(t => t.SolicitudImagenes)
+                .Include(t => t.ComparacionesImagenes)
+                .Include(t => t.Sector)
+                .Include(t => t.Tarea)
+                .Include(t => t.Tecnico)
+                .Include(t => t.UsuarioCreacion)
+                .AsNoTracking()
+                .ToListAsync();
+
+        return trabajos.Where(t => t.Sector.PerfilId == idPerfil);
+    }
+
     public async Task<IEnumerable<Trabajo>>ObtenerPorTecnicoAsync(int idTecnico)
     {
         var trabajos = await _context.Trabajos

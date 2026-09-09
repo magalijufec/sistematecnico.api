@@ -275,41 +275,31 @@ namespace SistemaTecnico.Services
 
         private async Task<IEnumerable<Trabajo>> ObtenerTrabajosSegunUsuarioAsync()
         {
-            var usuarioId = ObtenerUsuarioIdActual();
-            var rol = ObtenerRolActual();
+            var (usuarioId, rol) = ObtenerUsuarioActual();
 
-            // ADMINISTRADOR Y SISTEMAS
-            // Pueden ver todos
-            if (rol == "Administrador" || rol == "Sistemas")
+            if (rol == "Administrador")
             {
                 return await _trabajoRepository.ObtenerTodosAsync();
             }
-
-            // TÉCNICO
-            // Solo ve sus propios trabajos
-            if (rol == "Tecnico")
+            else if (rol == "Sistemas" || rol == "Monitoreo" || rol == "Mantenimiento")
+            {
+                var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId);
+                return await _trabajoRepository.ObtenerPorPerfilAsync(usuario.Perfil.Id);
+            }
+            else if (rol == "Tecnico")
             {
                 return await _trabajoRepository.ObtenerPorTecnicoAsync(usuarioId);
             }
-
-            // FARMACIA
-            // Solo ve los trabajos de su cliente
-            if (rol == "Farmacia")
+            // FARMACIA Solo ve los trabajos de su cliente
+            else if (rol == "Farmacia")
             {
                 var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId);
-
                 if (usuario == null || usuario.Cliente.Id == null)
-                {
                     return Enumerable.Empty<Trabajo>();
-                }
-
                 return await _trabajoRepository.ObtenerPorClienteAsync(usuario.Cliente.Id);
             }
-
-            // PAGOS
-            // Por ahora todos
-            // Después podemos crear un filtro específico
-            if (rol == "Pagos")
+            // PAGOS Por ahora todos
+            else if (rol == "Pagos")
             {
                 return await _trabajoRepository.ObtenerTodosAsync();
             }
@@ -443,96 +433,46 @@ namespace SistemaTecnico.Services
             {
                 if (rol == "Farmacia")
                 {
-                    var usuario =
-                        await _usuarioRepository
-                            .ObtenerPorIdAsync(usuarioId);
-
-                    if (
-                        usuario == null ||
-                        usuario.Cliente.Id == null ||
-                        t.Cliente.Id != usuario.Cliente.Id
-                    )
-                    {
-                        return null;
-                    }
+                    var usuario = await _usuarioRepository .ObtenerPorIdAsync(usuarioId);
+                    if (usuario == null || usuario.Cliente.Id == null || t.Cliente.Id != usuario.Cliente.Id)
+                        return null;                    
                 }
             }
 
             return new TrabajoResponseDto
             {
                 Id = t.Id,
-
                 FechaSolicitud = t.FechaSolicitud,
-
                 FechaInicio = t.FechaInicio,
-
                 FechaFinalizado = t.FechaFinalizado,
-
                 Estado = t.Estado.Nombre,
-
                 EstadoColor = t.Estado.Color,
-
                 IdEstado = t.Estado.Id,
-
                 IdCliente = t.Cliente.Id,
-
                 Cliente = t.Cliente.Nombre,
-
-                IdsTecnicos =
-                    ConvertirTecnicosAsignados(
-                        t.TecnicosAsignados
-                    ),
-
-                TecnicosAsignados =
-                    ObtenerNombresTecnicos(
-                        t.TecnicosAsignados,
-                        tecnicos
-                    ),
-
-                Tecnico =
-                    t.Tecnico?.NombreApellido ?? " - ",
-
-                Provincia =
-                    t.Cliente.Provincia.Nombre,
-
-                Ciudad =
-                    t.Cliente.Ciudad.Nombre,
-
-                Direccion =
-                    t.Cliente.Direccion ?? " - ",
-
-                Sector =
-                    t.Sector.Nombre,
-
-                IdTarea =
-                    t.Tarea.Id,
-
-                Tarea =
-                    t.Tarea.Descripcion,
-
-                Comentarios =
-                    t.Comentarios,
-
-                TrabajoRealizado =
-                    t.TrabajoRealizado,
-
-                TieneFactura =
-                    t.Facturas.Any(),
-
-                Facturas =
-                    t.Facturas
+                IdsTecnicos = ConvertirTecnicosAsignados(t.TecnicosAsignados),
+                TecnicosAsignados = ObtenerNombresTecnicos(t.TecnicosAsignados, tecnicos),
+                Tecnico = t.Tecnico?.NombreApellido ?? " - ",
+                Provincia = t.Cliente.Provincia.Nombre,
+                Ciudad = t.Cliente.Ciudad.Nombre,
+                Direccion = t.Cliente.Direccion ?? " - ",
+                Sector = t.Sector.Nombre,
+                IdTarea = t.Tarea.Id,
+                Tarea = t.Tarea.Descripcion,
+                Comentarios = t.Comentarios,
+                TrabajoRealizado = t.TrabajoRealizado,
+                TieneFactura = t.Facturas.Any(),
+                Facturas = t.Facturas
                         .Select(x => new TrabajoFacturaDto
                         {
                             Id = x.Id,
                             RutaArchivo = x.RutaArchivo,
                             FechaCarga = x.FechaCarga,
                             FechaPagado = x.FechaPagado
-                        })
-                        .ToList(),
+                        }).ToList(),
 
-                // ✅ SOLO imágenes de solicitud
-                ImagenesSolicitud =
-                    t.SolicitudImagenes
+                // SOLO imágenes de solicitud
+                ImagenesSolicitud = t.SolicitudImagenes
                         .Where(x =>
                             !idsImagenesComparacion.Contains(
                                 x.Id
@@ -541,14 +481,9 @@ namespace SistemaTecnico.Services
                         {
                             Id = x.Id,
                             RutaArchivo = x.RutaArchivo
-                        })
-                        .ToList(),
-
-                Solicitante =
-                    t.UsuarioCreacion?.NombreApellido,
-
-                Materiales =
-                    t.Materiales
+                        }).ToList(),
+                Solicitante = t.UsuarioCreacion?.NombreApellido,
+                Materiales = t.Materiales
             };
         }
 
