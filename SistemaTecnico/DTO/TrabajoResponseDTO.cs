@@ -10,6 +10,7 @@
         public string EstadoColor { get; set; }
         public int IdEstado { get; set; }
         public List<int> IdsTecnicos { get; set; }
+        public List<string>? TecnicosAsignados { get; set; }
         public string Tecnico { get; set; } = string.Empty;
         public int IdCliente { get; set; }
         public string Cliente { get; set; } = string.Empty;

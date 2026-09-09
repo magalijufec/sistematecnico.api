@@ -13,9 +13,7 @@ namespace SistemaTecnico.Middleware
             _next = next;
         }
 
-        public async Task InvokeAsync(
-            HttpContext context,
-            IErrorLogRepository errorLogRepository)
+        public async Task InvokeAsync(HttpContext context, IErrorLogRepository errorLogRepository)
         {
             try
             {

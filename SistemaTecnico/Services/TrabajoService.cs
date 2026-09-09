@@ -1,5 +1,7 @@
-﻿using System.Security.Claims;
+﻿using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using QuestPDF.Fluent;
 using SistemaTecnico.DTO;
 using SistemaTecnico.Models;
@@ -115,8 +117,6 @@ namespace SistemaTecnico.Services
 
             var presupuestos = await _presupuestoRepository.ObtenerPorTecnicoAsync(usuarioId);
 
-            var trabajos2 = trabajos.ToList();
-
             return trabajos
                 .Where(t => 
                 { 
@@ -191,6 +191,7 @@ namespace SistemaTecnico.Services
         {
             var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
             var (usuarioId, rol) = ObtenerUsuarioActual();
+            var tecnicos = await _usuarioRepository.ObtenerTecnicosAsync();
 
             return trabajos
                 .Where(t => (t.Estado.Id >= EstadosTrabajo.MaterialesEnviados && t.Estado.Id != EstadosTrabajo.Finalizado && rol != "Tecnico")
@@ -207,6 +208,7 @@ namespace SistemaTecnico.Services
                     IdCliente = t.Cliente.Id,
                     Cliente = t.Cliente.NroCliente + " - " + t.Cliente.Nombre,
                     IdsTecnicos = ConvertirTecnicosAsignados(t.TecnicosAsignados),
+                    TecnicosAsignados = ObtenerNombresTecnicos(t.TecnicosAsignados, tecnicos), 
                     Tecnico = t.Tecnico?.NombreApellido,
                     IdTarea = t.Tarea.Id,
                     Tarea = t.Tarea.Descripcion,
@@ -216,6 +218,29 @@ namespace SistemaTecnico.Services
                     TieneFactura = t.Facturas.Any()
                 })
                 .OrderByDescending(t => t.FechaSolicitud);
+        }
+
+        private static List<string> ObtenerNombresTecnicos(string? tecnicosAsignados, IEnumerable<Usuario> tecnicos)
+        {
+            if (string.IsNullOrWhiteSpace(tecnicosAsignados))
+            {
+                return [];
+            }
+
+            var ids = tecnicosAsignados
+                .Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries |
+                    StringSplitOptions.TrimEntries
+                )
+                .Select(x => int.Parse(x))
+                .ToList();
+
+            return tecnicos
+                .Where(u => ids.Contains(u.Id))
+                .Select(u => u.NombreApellido)
+                .Distinct()
+                .ToList();
         }
 
         private static List<int> ConvertirTecnicosAsignados(string? tecnicosAsignados)
@@ -393,22 +418,40 @@ namespace SistemaTecnico.Services
             var usuarioId = ObtenerUsuarioIdActual();
             var rol = ObtenerRolActual();
 
+            var tecnicos = await _usuarioRepository.ObtenerTecnicosAsync();
+
+            // Obtener comparaciones
+            var comparaciones =
+                await _trabajoImagenComparacionRepository
+                    .ObtenerPorTrabajoAsync(id);
+
+            var idsImagenesComparacion =
+                comparaciones?
+                    .SelectMany(c => new int?[]
+                    {
+                c.ImagenAntesId,
+                c.ImagenDespuesId
+                    })
+                    .Where(x => x.HasValue)
+                    .Select(x => x!.Value)
+                    .ToHashSet()
+                ?? new HashSet<int>();
+
             // Administrador y Sistemas
             // pueden acceder a cualquier trabajo
             if (rol != "Administrador" && rol != "Sistemas")
             {
-                // Técnico
-                //if (rol == "Tecnico" && t.Tecnico.Id != usuarioId)
-                //{
-                //    return null;
-                //}
-
-                // Farmacia
                 if (rol == "Farmacia")
                 {
-                    var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId);
+                    var usuario =
+                        await _usuarioRepository
+                            .ObtenerPorIdAsync(usuarioId);
 
-                    if (usuario == null || usuario.Cliente.Id == null || t.Cliente.Id != usuario.Cliente.Id)
+                    if (
+                        usuario == null ||
+                        usuario.Cliente.Id == null ||
+                        t.Cliente.Id != usuario.Cliente.Id
+                    )
                     {
                         return null;
                     }
@@ -418,25 +461,64 @@ namespace SistemaTecnico.Services
             return new TrabajoResponseDto
             {
                 Id = t.Id,
+
                 FechaSolicitud = t.FechaSolicitud,
+
                 FechaInicio = t.FechaInicio,
+
                 FechaFinalizado = t.FechaFinalizado,
+
                 Estado = t.Estado.Nombre,
+
                 EstadoColor = t.Estado.Color,
+
                 IdEstado = t.Estado.Id,
+
                 IdCliente = t.Cliente.Id,
+
                 Cliente = t.Cliente.Nombre,
-                IdsTecnicos = ConvertirTecnicosAsignados(t.TecnicosAsignados),
-                Tecnico = t.Tecnico?.NombreApellido ?? " - ",
-                Provincia = t.Cliente.Provincia.Nombre,
-                Ciudad = t.Cliente.Ciudad.Nombre,  
-                Direccion = t.Cliente.Direccion ?? " - ",
-                Sector = t.Sector.Nombre,
-                IdTarea = t.Tarea.Id,                
-                Tarea = t.Tarea.Descripcion,
-                Comentarios = t.Comentarios,
-                TrabajoRealizado = t.TrabajoRealizado,
-                TieneFactura = t.Facturas.Any(),
+
+                IdsTecnicos =
+                    ConvertirTecnicosAsignados(
+                        t.TecnicosAsignados
+                    ),
+
+                TecnicosAsignados =
+                    ObtenerNombresTecnicos(
+                        t.TecnicosAsignados,
+                        tecnicos
+                    ),
+
+                Tecnico =
+                    t.Tecnico?.NombreApellido ?? " - ",
+
+                Provincia =
+                    t.Cliente.Provincia.Nombre,
+
+                Ciudad =
+                    t.Cliente.Ciudad.Nombre,
+
+                Direccion =
+                    t.Cliente.Direccion ?? " - ",
+
+                Sector =
+                    t.Sector.Nombre,
+
+                IdTarea =
+                    t.Tarea.Id,
+
+                Tarea =
+                    t.Tarea.Descripcion,
+
+                Comentarios =
+                    t.Comentarios,
+
+                TrabajoRealizado =
+                    t.TrabajoRealizado,
+
+                TieneFactura =
+                    t.Facturas.Any(),
+
                 Facturas =
                     t.Facturas
                         .Select(x => new TrabajoFacturaDto
@@ -447,15 +529,26 @@ namespace SistemaTecnico.Services
                             FechaPagado = x.FechaPagado
                         })
                         .ToList(),
+
+                // ✅ SOLO imágenes de solicitud
                 ImagenesSolicitud =
                     t.SolicitudImagenes
+                        .Where(x =>
+                            !idsImagenesComparacion.Contains(
+                                x.Id
+                            ))
                         .Select(x => new ImagenDTO
                         {
                             Id = x.Id,
                             RutaArchivo = x.RutaArchivo
-                        }).ToList(),
-                Solicitante = t.UsuarioCreacion?.NombreApellido,
-                Materiales = t.Materiales
+                        })
+                        .ToList(),
+
+                Solicitante =
+                    t.UsuarioCreacion?.NombreApellido,
+
+                Materiales =
+                    t.Materiales
             };
         }
 
@@ -606,27 +699,22 @@ namespace SistemaTecnico.Services
                                 trabajo.Id,
                                 $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
                                 trabajo.Tarea.Descripcion,
-                                trabajo.TrabajoRealizado ?? ""
-                            );
+                                trabajo.TrabajoRealizado ?? "");
 
                 var pdf = await GenerarInformePdfAsync(trabajo.Id);
 
                 var adjuntos = new List<ArchivoAdjunto>{
-                new ArchivoAdjunto
-                {
-                    Nombre =
-                        $"Informe-Trabajo-{trabajo.Id}.pdf",
+                    new ArchivoAdjunto
+                    {
+                        Nombre = $"Informe-Trabajo-{trabajo.Id}.pdf",
+                        Archivo = pdf
+                    }
+                };
 
-                    Archivo = pdf
-                }
-                            };
-
-                await _emailService.EnviarAsync(
-                            trabajo.UsuarioCreacion.Email,
+                await _emailService.EnviarAsync(trabajo.UsuarioCreacion.Email,
                             $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
                             html,
-                            adjuntos
-                        );
+                            adjuntos);
                 }
 
             return true;
@@ -1094,8 +1182,7 @@ namespace SistemaTecnico.Services
 
             if (!puedeVerTodos)
             {
-                if (usuarioActual.Rol == "Tecnico" &&
-                    trabajo.Tecnico?.Id != usuarioActual.UsuarioId)
+                if (usuarioActual.Rol == "Tecnico" && trabajo.Tecnico?.Id != usuarioActual.UsuarioId)
                 {
                     throw new UnauthorizedAccessException(
                         "No tiene permiso para consultar este trabajo."
@@ -1104,11 +1191,9 @@ namespace SistemaTecnico.Services
 
                 if (usuarioActual.Rol == "Farmacia")
                 {
-                    var usuario = await _usuarioRepository
-                        .ObtenerPorIdAsync(usuarioActual.UsuarioId);
+                    var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioActual.UsuarioId);
 
-                    if (usuario?.Cliente?.Id == null ||
-                        trabajo.Cliente?.Id != usuario.Cliente.Id)
+                    if (usuario?.Cliente?.Id == null || trabajo.Cliente?.Id != usuario.Cliente.Id)
                     {
                         throw new UnauthorizedAccessException(
                             "No tiene permiso para consultar este trabajo."
@@ -1313,7 +1398,7 @@ namespace SistemaTecnico.Services
                             // 5. TRABAJO REALIZADO
                             column.Item()
                                 .PaddingTop(25)
-                                .Text("Trabajo realizado")
+                                .Text("Detalle del trabajo realizado")
                                 .FontSize(14)
                                 .Bold();
 
@@ -1324,7 +1409,7 @@ namespace SistemaTecnico.Services
                                 .Padding(10)
                                 .Text(string.IsNullOrWhiteSpace(trabajo.TrabajoRealizado)
                                     ? "Sin detalle del trabajo realizado"
-                                    : trabajo.TrabajoRealizado);
+                                    : ConvertirHtmlATexto(trabajo.TrabajoRealizado));
 
                             // 6. COMPARACIONES ANTES / DESPUÉS
                             if (comparaciones.Count > 0)
@@ -1409,6 +1494,28 @@ namespace SistemaTecnico.Services
 
             document.GeneratePdf(stream);
             return stream.ToArray();
+        }
+
+        private static string ConvertirHtmlATexto(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+            {
+                return string.Empty;
+            }
+
+            html = html.Replace("</p>", "\n\n");
+            html = html.Replace("<br>", "\n");
+            html = html.Replace("<br/>", "\n");
+            html = html.Replace("<br />", "\n");
+            html = html.Replace("<li>", "• ");
+            html = html.Replace("</li>", "\n");
+
+            var texto = Regex.Replace(
+                html,
+                "<.*?>",
+                string.Empty);
+
+            return WebUtility.HtmlDecode(texto).Trim();
         }
 
         private void DibujarImagenSolicitud(QuestPDF.Infrastructure.IContainer container, Imagen imagen)

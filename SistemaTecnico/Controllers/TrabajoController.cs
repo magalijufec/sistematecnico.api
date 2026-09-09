@@ -364,11 +364,7 @@ public class TrabajoController : ControllerBase
         {
             var pdf = await _trabajoService.GenerarInformePdfAsync(id);
 
-            return File(
-                pdf,
-                "application/pdf",
-                $"Informe-Trabajo-{id}.pdf"
-            );
+            return File(pdf, "application/pdf", $"Informe-Trabajo-{id}.pdf");
         }
         catch (KeyNotFoundException ex)
         {
