@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using SistemaTecnico.DTO;
+using SistemaTecnico.Helpers;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 
@@ -35,7 +36,7 @@ namespace SistemaTecnico.Services
                     RutaArchivo = x.RutaArchivo,
                     Descripcion = x.Descripcion,
                     Tecnico = x.Tecnico.NombreApellido,
-                    FechaCarga = x.FechaCarga,
+                    FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
                     TrabajoId = x.TrabajoId,
                     EstadoId = x.EstadoId,
                     Estado = x.Estado.Descripcion

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using QuestPDF.Fluent;
 using SistemaTecnico.DTO;
+using SistemaTecnico.Helpers;
 using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 
@@ -146,7 +147,7 @@ namespace SistemaTecnico.Services
                         Id = t.Id,
 
                         FechaSolicitud =
-                            t.FechaSolicitud,
+                            FechaHelper.AhoraArgentina(t.FechaSolicitud),
 
                         IdEstado =
                             idEstado,
@@ -317,9 +318,9 @@ namespace SistemaTecnico.Services
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
-                    FechaSolicitud = t.FechaSolicitud,
-                    FechaInicio = t.FechaInicio,
-                    FechaFinalizado = t.FechaFinalizado,
+                    FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
+                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio.Value),
+                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado.Value),
                     IdCliente = t.Cliente.Id,
                     Cliente =
                         t.Cliente.NroCliente +
@@ -338,8 +339,8 @@ namespace SistemaTecnico.Services
                             {
                                 Id = x.Id,
                                 RutaArchivo = x.RutaArchivo,
-                                FechaCarga = x.FechaCarga,
-                                FechaPagado = x.FechaPagado
+                                FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
+                                FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado.Value)
                             })
                             .ToList(),
                                     })
@@ -358,31 +359,20 @@ namespace SistemaTecnico.Services
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
-
-                    FechaSolicitud = t.FechaSolicitud,
-
-                    FechaInicio = t.FechaInicio,
-
-                    FechaFinalizado = t.FechaFinalizado,
-                    FechaPagado = t.FechaPagado,
-
+                    FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
+                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio.Value),
+                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado.Value),
+                    FechaPagado = FechaHelper.AhoraArgentina(t.FechaPagado.Value),
                     IdCliente = t.Cliente.Id,
-
                     Cliente =
                         t.Cliente.NroCliente +
                         " - " +
                         t.Cliente.Nombre,
-
                     IdTecnico = t.Tecnico.Id,
-
-                    Tecnico =
-                        t.Tecnico.NombreApellido,
-
+                    Tecnico = t.Tecnico.NombreApellido,
                     IdTarea = t.Tarea.Id,
-
                     Tarea =
                         t.Tarea.Descripcion,
-
                     TrabajoRealizado =
                         t.TrabajoRealizado,
 
@@ -411,9 +401,7 @@ namespace SistemaTecnico.Services
             var tecnicos = await _usuarioRepository.ObtenerTecnicosAsync();
 
             // Obtener comparaciones
-            var comparaciones =
-                await _trabajoImagenComparacionRepository
-                    .ObtenerPorTrabajoAsync(id);
+            var comparaciones = await _trabajoImagenComparacionRepository.ObtenerPorTrabajoAsync(id);
 
             var idsImagenesComparacion =
                 comparaciones?
@@ -429,7 +417,7 @@ namespace SistemaTecnico.Services
 
             // Administrador y Sistemas
             // pueden acceder a cualquier trabajo
-            if (rol != "Administrador" && rol != "Sistemas")
+            if (rol != "Administrador" && rol != "Sistemas" && rol != "Mantenimiento" && rol != "Monitoreo")
             {
                 if (rol == "Farmacia")
                 {
@@ -442,9 +430,9 @@ namespace SistemaTecnico.Services
             return new TrabajoResponseDto
             {
                 Id = t.Id,
-                FechaSolicitud = t.FechaSolicitud,
-                FechaInicio = t.FechaInicio,
-                FechaFinalizado = t.FechaFinalizado,
+                FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
+                FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio.Value),
+                FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado.Value),
                 Estado = t.Estado.Nombre,
                 EstadoColor = t.Estado.Color,
                 IdEstado = t.Estado.Id,
@@ -467,8 +455,8 @@ namespace SistemaTecnico.Services
                         {
                             Id = x.Id,
                             RutaArchivo = x.RutaArchivo,
-                            FechaCarga = x.FechaCarga,
-                            FechaPagado = x.FechaPagado
+                            FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
+                            FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado.Value)
                         }).ToList(),
 
                 // SOLO imágenes de solicitud
@@ -620,8 +608,8 @@ namespace SistemaTecnico.Services
 
             trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteAprobacionTrabajo);
             trabajo.TrabajoRealizado = dto.TrabajoRealizado;
-            trabajo.FechaInicio = dto.FechaInicio;
-            trabajo.FechaFinalizado = dto.FechaFin;
+            trabajo.FechaInicio = FechaHelper.AhoraArgentina(dto.FechaInicio);
+            trabajo.FechaFinalizado = FechaHelper.AhoraArgentina(dto.FechaFin);
 
             await _trabajoRepository.ActualizarAsync(trabajo);
 
@@ -995,7 +983,7 @@ namespace SistemaTecnico.Services
                     factura.Id,
 
                 FechaPagadoFactura =
-                    factura.FechaPagado!.Value,
+                    FechaHelper.AhoraArgentina(factura.FechaPagado!.Value),
 
                 TrabajoFinalizado =
                     todasPagadas,

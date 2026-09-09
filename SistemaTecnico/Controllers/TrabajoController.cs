@@ -19,7 +19,7 @@ public class TrabajoController : ControllerBase
     }
 
     [HttpGet("solicitudes")]
-    public async Task<IActionResult> GerSolicitudesDeTrabajo()
+    public async Task<IActionResult> GetSolicitudesDeTrabajo()
     {
         var trabajos = await _trabajoService.ObtenerSolicitudesDeTrabajoAsync();
         return Ok(trabajos);
