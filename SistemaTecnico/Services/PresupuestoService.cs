@@ -22,28 +22,24 @@ namespace SistemaTecnico.Services
             _environment = environment;
         }
 
-        public async Task<List<PresupuestoDetalleDTO>>ObtenerPresupuestosByTrabajoAsync(int trabajoId)
+        public async Task<List<PresupuestoDetalleDTO>> ObtenerPresupuestosByTrabajoAsync(int idTrabajo)
         {
-            var presupuestos =
-                await _presupuestoRepository
-                    .ObtenerPorTrabajoAsync(
-                        trabajoId);
+            var presupuestos = await _presupuestoRepository.ObtenerPorTrabajoAsync(idTrabajo);
 
             return presupuestos
-                .Select(x => new PresupuestoDetalleDTO
+                .Select(p => new PresupuestoDetalleDTO
                 {
-                    Id = x.Id,
-                    RutaArchivo = x.RutaArchivo,
-                    Descripcion = x.Descripcion,
-                    Tecnico = x.Tecnico.NombreApellido,
-                    FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
-                    TrabajoId = x.TrabajoId,
-                    EstadoId = x.EstadoId,
-                    Estado = x.Estado.Descripcion
-                })
-                .ToList();
+                    Id = p.Id,
+                    RutaArchivo = p.RutaArchivo,
+                    Descripcion = p.Descripcion,
+                    TecnicoId = p.TecnicoId,
+                    Tecnico = p.Tecnico?.NombreApellido ?? "Técnico no disponible",
+                    FechaCarga = FechaHelper.AhoraArgentina(p.FechaCarga),
+                    TrabajoId = p.TrabajoId,
+                    EstadoId = p.EstadoId,
+                    Estado = p.Estado?.Descripcion ?? "Sin estado"
+                }).ToList();
         }
-
 
         public async Task<Presupuesto> CrearAsync(PresupuestoDTO dto)
         {
@@ -121,7 +117,20 @@ namespace SistemaTecnico.Services
             {
                 presupuesto.EstadoId = EstadosPresupuesto.Aprobado;
                 presupuesto.MotivoRechazo = null;
-                await _trabajoRepository.ActualizarPresupuestoAsync(presupuesto.TrabajoId, dto, presupuesto.TecnicoId);                
+                await _trabajoRepository.ActualizarPresupuestoAsync(presupuesto.TrabajoId, dto, presupuesto.TecnicoId);
+
+                var presupuestosDelTrabajo = await _presupuestoRepository.ObtenerPorTrabajoAsync(presupuesto.TrabajoId);
+                foreach (var item in presupuestosDelTrabajo)
+                {
+                    if (item.Id != presupuesto.Id)
+                    {
+                        item.UsuarioDecisionId = dto.IdUsuarioDecision;
+                        item.FechaDecision = DateTime.UtcNow;
+                        item.EstadoId = EstadosPresupuesto.Rechazado;
+                        item.MotivoRechazo = "Rechazo automático. Se aprobó otro presupuesto";
+                        await _trabajoRepository.ActualizarPresupuestoAsync(item.TrabajoId, dto, item.TecnicoId);
+                    }
+                }
             }
 
             await _presupuestoRepository.GuardarCambiosAsync();

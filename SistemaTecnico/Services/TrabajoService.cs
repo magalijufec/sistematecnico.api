@@ -130,7 +130,7 @@ namespace SistemaTecnico.Services
                 .Select(t => { var presupuesto = presupuestos.FirstOrDefault(p => p.Trabajo.Id == t.Id);
 
                     var estado = t.Estado.Nombre;
-                    var color =t.Estado.Color;
+                    var color = t.Estado.Color;
                     var idEstado = t.Estado.Id;
 
                     if (presupuesto != null && presupuesto.Estado.Id != EstadosPresupuesto.Aprobado &&
@@ -138,7 +138,7 @@ namespace SistemaTecnico.Services
                     )
                     {
                         estado = presupuesto.Estado.Descripcion;
-                        //color = presupuesto.Estado.Color;
+                        color = "#9b9b9b";
                         idEstado = presupuesto.Estado.Id;
                     }
 
@@ -390,86 +390,279 @@ namespace SistemaTecnico.Services
 
         public async Task<TrabajoResponseDto?> ObtenerPorIdAsync(int id)
         {
-            var t = await _trabajoRepository.ObtenerPorIdAsync(id);
+            var t =
+                await _trabajoRepository
+                    .ObtenerPorIdAsync(id);
 
             if (t == null)
                 return null;
 
-            var usuarioId = ObtenerUsuarioIdActual();
-            var rol = ObtenerRolActual();
+            var usuarioId =
+                ObtenerUsuarioIdActual();
 
-            var tecnicos = await _usuarioRepository.ObtenerTecnicosAsync();
+            var rol =
+                ObtenerRolActual();
 
-            // Obtener comparaciones
-            var comparaciones = await _trabajoImagenComparacionRepository.ObtenerPorTrabajoAsync(id);
+            var tecnicos =
+                await _usuarioRepository
+                    .ObtenerTecnicosAsync();
 
-            var idsImagenesComparacion = comparaciones?.SelectMany(c => new int?[]
-                    {
-                        c.ImagenAntesId,
-                        c.ImagenDespuesId
-                    })
-                    .Where(x => x.HasValue)
-                    .Select(x => x!.Value)
-                    .ToHashSet()
-                ?? new HashSet<int>();
-
-            if (rol != "Administrador" && rol != "Sistemas" && rol != "Mantenimiento" && rol != "Monitoreo")
+            // VALIDAR ACCESO
+            if (
+                rol != "Administrador" &&
+                rol != "Sistemas" &&
+                rol != "Mantenimiento" &&
+                rol != "Monitoreo"
+            )
             {
                 if (rol == "Farmacia")
                 {
-                    var usuario = await _usuarioRepository .ObtenerPorIdAsync(usuarioId);
-                    if (usuario == null || usuario.Cliente?.Id == null || t.Cliente.Id != usuario.Cliente.Id)
-                        return null;                    
+                    var usuario =
+                        await _usuarioRepository
+                            .ObtenerPorIdAsync(
+                                usuarioId
+                            );
+
+                    if (
+                        usuario == null ||
+                        usuario.Cliente == null ||
+                        t.Cliente.Id != usuario.Cliente.Id
+                    )
+                    {
+                        return null;
+                    }
                 }
             }
 
-            List<Presupuesto> presupuestos = await _presupuestoRepository.ObtenerPorTrabajoAsync(id);
+            // COMPARACIONES DE IMÁGENES
+            var comparaciones =
+                await _trabajoImagenComparacionRepository
+                    .ObtenerPorTrabajoAsync(id);
 
+            var idsImagenesComparacion =
+                comparaciones?
+                    .SelectMany(
+                        comparacion => new int?[]
+                        {
+                    comparacion.ImagenAntesId,
+                    comparacion.ImagenDespuesId
+                        }
+                    )
+                    .Where(
+                        idImagen =>
+                            idImagen.HasValue
+                    )
+                    .Select(
+                        idImagen =>
+                            idImagen!.Value
+                    )
+                    .ToHashSet()
+                ?? new HashSet<int>();
+
+            // PRESUPUESTOS DEL TRABAJO
+            var presupuestos =
+                await _presupuestoRepository
+                    .ObtenerPorTrabajoAsync(id);
+
+            /*
+             * Presupuesto correspondiente al usuario actual.
+             *
+             * Esto tendrá valor principalmente cuando el usuario
+             * autenticado sea un técnico.
+             */
+            var presupuestoUsuario =
+                presupuestos.FirstOrDefault(
+                    presupuesto =>
+                        presupuesto.TrabajoId == t.Id &&
+                        presupuesto.TecnicoId == usuarioId
+                );
+
+            // ESTADO QUE SE MOSTRARÁ EN EL FRONTEND
+            var estadoMostrar =
+                t.Estado.Nombre;
+
+            var estadoColorMostrar =
+                t.Estado.Color;
+
+            var idEstadoMostrar =
+                t.Estado.Id;
+            if (
+                presupuestoUsuario != null &&
+                presupuestoUsuario.EstadoId !=
+                    EstadosPresupuesto.Aprobado &&
+                presupuestoUsuario.EstadoId !=
+                    EstadosPresupuesto.EnRevision
+            )
+            {
+                estadoMostrar =
+                    presupuestoUsuario.Estado?.Descripcion
+                    ?? "Sin estado";
+
+                estadoColorMostrar =
+                    "#9b9b9b";
+
+                idEstadoMostrar =
+                    presupuestoUsuario.EstadoId;
+            }
+
+            // PRESUPUESTO APROBADO
+            var presupuestoAprobado =
+                presupuestos
+                    .Where(
+                        presupuesto =>
+                            presupuesto.EstadoId ==
+                            EstadosPresupuesto.Aprobado
+                    )
+                    .Select(
+                        presupuesto =>
+                            new PresupuestoAprobadoDTO
+                            {
+                                Tecnico =
+                                    presupuesto.Tecnico?
+                                        .NombreApellido
+                                    ?? "Técnico no disponible",
+
+                                Archivo =
+                                    presupuesto.RutaArchivo
+                            }
+                    )
+                    .FirstOrDefault();
+
+            // CONSTRUIR RESPUESTA
             return new TrabajoResponseDto
             {
-                Id = t.Id,
-                FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
-                FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio),
-                FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado),
-                Estado = t.Estado.Nombre,
-                EstadoColor = t.Estado.Color,
-                IdEstado = t.Estado.Id,
-                IdCliente = t.Cliente.Id,
-                Cliente = t.Cliente.Nombre,
-                IdsTecnicos = ConvertirTecnicosAsignados(t.TecnicosAsignados),
-                TecnicosAsignados = ObtenerNombresTecnicos(t.TecnicosAsignados, tecnicos),
-                Tecnico = t.Tecnico?.NombreApellido ?? " - ",
-                Provincia = t.Cliente.Provincia.Nombre,
-                Ciudad = t.Cliente.Ciudad.Nombre,
-                Direccion = t.Cliente.Direccion ?? " - ",
-                Sector = t.Sector.Nombre,
-                IdTarea = t.Tarea.Id,
-                Tarea = t.Tarea.Descripcion,
-                Comentarios = t.Comentarios,
-                TrabajoRealizado = t.TrabajoRealizado,
-                TieneFactura = t.Facturas.Any(),
-                Facturas = t.Facturas
-                        .Select(x => new TrabajoFacturaDto
-                        {
-                            Id = x.Id,
-                            RutaArchivo = x.RutaArchivo,
-                            FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
-                            FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado)
-                        }).ToList(),
-                // SOLO imágenes de solicitud
-                ImagenesSolicitud = t.SolicitudImagenes
-                        .Where(x =>
-                            !idsImagenesComparacion.Contains(
-                                x.Id
-                            ))
-                        .Select(x => new ImagenDTO
-                        {
-                            Id = x.Id,
-                            RutaArchivo = x.RutaArchivo
-                        }).ToList(),
-                Solicitante = t.UsuarioCreacion?.NombreApellido,
-                Materiales = t.Materiales,
-                PresupuestoAprobado = presupuestos.Where(p => p.EstadoId == EstadosPresupuesto.Aprobado)
+                Id =
+                    t.Id,
+
+                FechaSolicitud =
+                    FechaHelper.AhoraArgentina(
+                        t.FechaSolicitud
+                    ),
+
+                FechaInicio =
+                    FechaHelper.AhoraArgentina(
+                        t.FechaInicio
+                    ),
+
+                FechaFinalizado =
+                    FechaHelper.AhoraArgentina(
+                        t.FechaFinalizado
+                    ),
+
+                // Estado calculado
+                Estado =
+                    estadoMostrar,
+
+                EstadoColor =
+                    estadoColorMostrar,
+
+                IdEstado =
+                    idEstadoMostrar,
+
+                IdCliente =
+                    t.Cliente.Id,
+
+                Cliente =
+                    t.Cliente.Nombre,
+
+                IdsTecnicos =
+                    ConvertirTecnicosAsignados(
+                        t.TecnicosAsignados
+                    ),
+
+                TecnicosAsignados =
+                    ObtenerNombresTecnicos(
+                        t.TecnicosAsignados,
+                        tecnicos
+                    ),
+
+                Tecnico =
+                    t.Tecnico?.NombreApellido
+                    ?? " - ",
+
+                Provincia =
+                    t.Cliente.Provincia.Nombre,
+
+                Ciudad =
+                    t.Cliente.Ciudad.Nombre,
+
+                Direccion =
+                    t.Cliente.Direccion
+                    ?? " - ",
+
+                Sector =
+                    t.Sector.Nombre,
+
+                IdTarea =
+                    t.Tarea.Id,
+
+                Tarea =
+                    t.Tarea.Descripcion,
+
+                Comentarios =
+                    t.Comentarios,
+
+                TrabajoRealizado =
+                    t.TrabajoRealizado,
+
+                TieneFactura =
+                    t.Facturas.Any(),
+
+                Facturas =
+                    t.Facturas
+                        .Select(
+                            factura =>
+                                new TrabajoFacturaDto
+                                {
+                                    Id =
+                                        factura.Id,
+
+                                    RutaArchivo =
+                                        factura.RutaArchivo,
+
+                                    FechaCarga =
+                                        FechaHelper.AhoraArgentina(
+                                            factura.FechaCarga
+                                        ),
+
+                                    FechaPagado =
+                                        FechaHelper.AhoraArgentina(
+                                            factura.FechaPagado
+                                        )
+                                }
+                        )
+                        .ToList(),
+
+                // Solo imágenes originales de la solicitud
+                ImagenesSolicitud =
+                    t.SolicitudImagenes
+                        .Where(
+                            imagen =>
+                                !idsImagenesComparacion
+                                    .Contains(imagen.Id)
+                        )
+                        .Select(
+                            imagen =>
+                                new ImagenDTO
+                                {
+                                    Id =
+                                        imagen.Id,
+
+                                    RutaArchivo =
+                                        imagen.RutaArchivo
+                                }
+                        )
+                        .ToList(),
+
+                Solicitante =
+                    t.UsuarioCreacion?
+                        .NombreApellido,
+
+                Materiales =
+                    t.Materiales,
+
+                PresupuestoAprobado =
+                   presupuestos.Where(p => p.EstadoId == EstadosPresupuesto.Aprobado)
                 .Select(p => new PresupuestoAprobadoDTO
                 {
                     Tecnico = p.Tecnico.NombreApellido,
@@ -486,7 +679,7 @@ namespace SistemaTecnico.Services
             var (usuarioId, rol) = ObtenerUsuarioActual();
             EstadoTrabajo estado = null;
 
-            if (rol == "Sistemas" || rol == "Mantenimiento" || rol == "Monitoreo")
+            if (rol == "Sistemas" || rol == "Mantenimiento" || rol == "Monitoreo" || rol == "Administrador")
                 estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendientePresupuestos);
             else
                 estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteRevisionSector);
