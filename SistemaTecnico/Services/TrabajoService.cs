@@ -693,7 +693,7 @@ namespace SistemaTecnico.Services
                 Comentarios = dto.Comentarios,
                 Estado = estado,
                 UsuarioCreacion = await _usuarioRepository.ObtenerPorIdActivoAsync(usuarioId),
-                TecnicosAsignados = string.Join(",",dto.IdsTecnicos)
+                TecnicosAsignados = dto.IdsTecnicos != null ? string.Join(",",dto.IdsTecnicos) : ""
             };
 
             await _trabajoRepository.AgregarAsync(trabajo);

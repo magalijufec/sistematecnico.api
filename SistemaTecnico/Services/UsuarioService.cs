@@ -81,6 +81,7 @@ namespace SistemaTecnico.Services
                 ProvinciaId = user.Provincia.Id,
                 CiudadId = user.Ciudad.Id,
                 ClienteId = user.Cliente != null ? user.Cliente.Id : null,
+                Cliente = user.Cliente != null ? user.Cliente.Nombre : null,
                 Activo = user.Activo
             };
         }

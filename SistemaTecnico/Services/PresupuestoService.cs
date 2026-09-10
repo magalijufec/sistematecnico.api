@@ -128,7 +128,6 @@ namespace SistemaTecnico.Services
                         item.FechaDecision = DateTime.UtcNow;
                         item.EstadoId = EstadosPresupuesto.Rechazado;
                         item.MotivoRechazo = "Rechazo automático. Se aprobó otro presupuesto";
-                        await _trabajoRepository.ActualizarPresupuestoAsync(item.TrabajoId, dto, item.TecnicoId);
                     }
                 }
             }

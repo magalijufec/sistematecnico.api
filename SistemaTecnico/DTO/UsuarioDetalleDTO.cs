@@ -12,5 +12,6 @@
         public int ProvinciaId { get; set; }
         public int CiudadId { get; set; }
         public int? ClienteId { get; set; }
+        public string? Cliente { get; set; }
     }
 }
