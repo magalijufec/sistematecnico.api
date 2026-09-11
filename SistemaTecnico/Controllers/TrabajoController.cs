@@ -101,20 +101,7 @@ public class TrabajoController : ControllerBase
             return NotFound();
 
         return NoContent();
-    }
-
-    [HttpPut("{idTrabajo:int}/materiales-enviados")]
-    public async Task<IActionResult> MaterialesEnviados(int idTrabajo)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-
-        var actualizado = await _trabajoService.MaterialesEnviadosAsync(idTrabajo);
-
-        if (!actualizado)
-            return NotFound();
-
-        return NoContent();
-    }
+    }    
 
     [HttpPut("{idTrabajo:int}/asignar-tecnicos")]
     public async Task<IActionResult> AsignarTecnicos(int idTrabajo, List<int> tecnicosIds)
@@ -131,13 +118,75 @@ public class TrabajoController : ControllerBase
     }
 
     [HttpPut("{idTrabajo:int}/materiales")]
+    [Authorize(Roles = "Tecnico")]
     public async Task<IActionResult> CargarMateriales(int idTrabajo, [FromBody] MaterialesDTO dto)
     {
-        var actualizado = await _trabajoService.CargarMaterialesAsync(idTrabajo, dto.Materiales);
+        try
+        {
+            var actualizado =
+                await _trabajoService
+                    .CargarMaterialesAsync(
+                        idTrabajo,
+                        dto.Materiales
+                    );
 
-        if (!actualizado) return NotFound();
+            if (!actualizado)
+            {
+                return NotFound(new
+                {
+                    mensaje =
+                        "No se encontró el trabajo."
+                });
+            }
 
-        return NoContent();
+            return Ok(new
+            {
+                mensaje =
+                    string.IsNullOrWhiteSpace(
+                        dto.Materiales
+                    )
+                        ? "Se registró que el trabajo no requiere materiales."
+                        : "Materiales registrados correctamente."
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+    }
+
+    [HttpPut("{idTrabajo:int}/materiales-enviados")]
+    public async Task<IActionResult> MarcarMaterialesEnviados(int idTrabajo)
+    {
+        var actualizado =
+            await _trabajoService
+                .MarcarMaterialesEnviadosAsync(
+                    idTrabajo
+                );
+
+        if (!actualizado)
+        {
+            return NotFound();
+        }
+
+        return Ok(new
+        {
+            mensaje =
+                "El trabajo fue autorizado para continuar."
+        });
     }
 
     [HttpDelete("{id:int}")]

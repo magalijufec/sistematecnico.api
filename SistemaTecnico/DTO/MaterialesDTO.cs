@@ -2,6 +2,6 @@
 {
     public class MaterialesDTO
     {
-        public string Materiales { get; set; } = string.Empty;
+        public string? Materiales { get; set; }
     }
 }

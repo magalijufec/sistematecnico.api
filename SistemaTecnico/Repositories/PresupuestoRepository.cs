@@ -53,6 +53,19 @@ namespace SistemaTecnico.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Presupuesto?>ObtenerAprobadoPorTrabajoAsync(
+        int idTrabajo)
+        {
+            return await _context.Presupuestos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    presupuesto =>
+                        presupuesto.TrabajoId == idTrabajo &&
+                        presupuesto.EstadoId ==
+                            EstadosPresupuesto.Aprobado
+                );
+        }
+
         public async Task AgregarAsync(Presupuesto presupuesto)
         {
             await _context.Presupuestos.AddAsync(presupuesto);

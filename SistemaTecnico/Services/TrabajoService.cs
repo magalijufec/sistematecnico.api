@@ -310,8 +310,7 @@ namespace SistemaTecnico.Services
 
         public async Task<IEnumerable<TrabajoFinalizadoDTO>> ObtenerTrabajosPendientesPagoAsync()
         {
-            var trabajos =
-                await ObtenerTrabajosSegunUsuarioAsync();
+            var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
 
             return trabajos
                 .Where(t => t.Estado.Id == EstadosTrabajo.PendientePago)
@@ -740,18 +739,118 @@ namespace SistemaTecnico.Services
             return true;
         }
 
-        public async Task<bool> CargarMaterialesAsync(int idTrabajo, string materiales)
+        public async Task<bool> CargarMaterialesAsync(int idTrabajo, string? materiales)
         {
             var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
 
             if (trabajo == null)
+            {
                 return false;
+            }
 
-            trabajo.Materiales = materiales;
-            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteMateriales);
+            if (trabajo.EstadoId != EstadosTrabajo.PresupuestoAprobado
+            )
+            {
+                throw new InvalidOperationException(
+                    "El trabajo debe tener un presupuesto aprobado para registrar los materiales."
+                );
+            }
 
-            await _trabajoRepository.ActualizarAsync(trabajo);
-            await _trabajoRepository.GuardarCambiosAsync();
+            var usuarioId = ObtenerUsuarioIdActual();
+
+            var presupuestoAprobado =
+                await _presupuestoRepository
+                    .ObtenerAprobadoPorTrabajoAsync(
+                        idTrabajo
+                    );
+
+            if (presupuestoAprobado == null)
+            {
+                throw new InvalidOperationException(
+                    "No se encontró un presupuesto aprobado para este trabajo."
+                );
+            }
+
+            if (
+                presupuestoAprobado.TecnicoId !=
+                usuarioId
+            )
+            {
+                throw new UnauthorizedAccessException(
+                    "Solamente el técnico del presupuesto aprobado puede registrar los materiales."
+                );
+            }
+
+            trabajo.Materiales =
+                string.IsNullOrWhiteSpace(materiales)
+                    ? null
+                    : materiales.Trim();
+
+            var estadoPendienteMateriales =
+                await _estadoRepository
+                    .ObtenerPorIdAsync(
+                        EstadosTrabajo.PendienteMateriales
+                    );
+
+            trabajo.Estado = estadoPendienteMateriales;
+
+            trabajo.EstadoId =
+                EstadosTrabajo.PendienteMateriales;
+
+            await _trabajoRepository
+                .ActualizarAsync(trabajo);
+
+            await _trabajoRepository
+                .GuardarCambiosAsync();
+
+            return true;
+        }
+
+        public async Task<bool> MarcarMaterialesEnviadosAsync(int idTrabajo)
+        {
+            var trabajo =
+                await _trabajoRepository
+                    .ObtenerPorIdAsync(idTrabajo);
+
+            if (trabajo == null)
+            {
+                return false;
+            }
+
+            if (
+                trabajo.EstadoId !=
+                EstadosTrabajo.PendienteMateriales
+            )
+            {
+                throw new InvalidOperationException(
+                    "El trabajo no se encuentra pendiente de materiales."
+                );
+            }
+
+            var estadoEnProceso =
+                await _estadoRepository
+                    .ObtenerPorIdAsync(
+                        EstadosTrabajo.EnProceso
+                    );
+
+            if (estadoEnProceso == null)
+            {
+                throw new InvalidOperationException(
+                    "No se encontró el estado EnProceso."
+                );
+            }
+
+            trabajo.Estado =
+                estadoEnProceso;
+
+            trabajo.EstadoId =
+                EstadosTrabajo.EnProceso;
+
+            await _trabajoRepository
+                .ActualizarAsync(trabajo);
+
+            await _trabajoRepository
+                .GuardarCambiosAsync();
 
             return true;
         }
@@ -811,7 +910,7 @@ namespace SistemaTecnico.Services
 
             await _trabajoRepository.GuardarCambiosAsync();
 
-            //se le avisa a sistemas que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
+            //se le avisa al sector correspondiente que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
             if (!string.IsNullOrWhiteSpace(trabajo.UsuarioCreacion.Email))
             {
                 var html = TrabajoEmailTemplates.TrabajoPendienteAprobacion(trabajo.Tecnico.NombreApellido,

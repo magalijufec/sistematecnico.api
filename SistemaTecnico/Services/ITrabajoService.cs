@@ -17,7 +17,8 @@ namespace SistemaTecnico.Services
         Task<bool> AprobarTrabajoAsync(int idTrabajo);
         Task<bool> CambiarEstadoTrabajoAsync(int idTrabajo, bool aprobado);
         Task<bool> AsignarTecnicosAsync(int idTrabajo, List<int> tecnicosIds);
-        Task<bool> CargarMaterialesAsync(int idTrabajo, string materiales);
+        Task<bool> CargarMaterialesAsync(int idTrabajo, string? materiales);
+        Task<bool> MarcarMaterialesEnviadosAsync(int idTrabajo);
         Task<bool> MaterialesEnviadosAsync(int idTrabajo);
         Task<RegistrarPagoFacturaResponseDto> RegistrarPagoAsync(int idTrabajo, int idFactura);
         Task<bool> SolicitarMejoraAsync(int id, SolicitarMejoraDTO dto);

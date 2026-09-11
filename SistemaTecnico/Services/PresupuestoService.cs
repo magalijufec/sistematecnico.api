@@ -76,7 +76,8 @@ namespace SistemaTecnico.Services
 
             Directory.CreateDirectory(carpeta);
 
-            var nombreArchivo = $"{DateTime.Now:yyMMddHHmmss}";
+            var extension =  Path.GetExtension(dto.Archivo.FileName);
+            var nombreArchivo = $"{DateTime.Now:yyMMddHHmmss}{extension}";
 
             var rutaFisica = Path.Combine(carpeta, nombreArchivo);
 
