@@ -754,3 +754,328 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    DECLARE @var6 nvarchar(max);
+    SELECT @var6 = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Trabajos]') AND [c].[name] = N'TecnicoId');
+    IF @var6 IS NOT NULL EXEC(N'ALTER TABLE [Trabajos] DROP CONSTRAINT ' + @var6 + ';');
+    ALTER TABLE [Trabajos] ALTER COLUMN [TecnicoId] int NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    ALTER TABLE [Trabajos] ADD [Materiales] nvarchar(max) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    ALTER TABLE [Trabajos] ADD [SectorId] int NOT NULL DEFAULT 0;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    ALTER TABLE [Tareas] ADD [SectorId] int NOT NULL DEFAULT 0;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE TABLE [EstadoPresupuesto] (
+        [Id] int NOT NULL IDENTITY,
+        [Descripcion] nvarchar(max) NOT NULL,
+        CONSTRAINT [PK_EstadoPresupuesto] PRIMARY KEY ([Id])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE TABLE [Sectores] (
+        [Id] int NOT NULL IDENTITY,
+        [Nombre] nvarchar(max) NOT NULL,
+        [UsuarioId] int NULL,
+        CONSTRAINT [PK_Sectores] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Sectores_Usuarios_UsuarioId] FOREIGN KEY ([UsuarioId]) REFERENCES [Usuarios] ([Id])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE TABLE [Presupuestos] (
+        [Id] int NOT NULL IDENTITY,
+        [FechaCarga] datetime2 NOT NULL,
+        [TecnicoId] int NOT NULL,
+        [UsuarioDecisionId] int NULL,
+        [FechaDecision] datetime2 NULL,
+        [EstadoId] int NOT NULL,
+        [MotivoRechazo] nvarchar(max) NULL,
+        [Descripcion] nvarchar(max) NULL,
+        [RutaArchivo] nvarchar(max) NULL,
+        [TrabajoId] int NOT NULL,
+        CONSTRAINT [PK_Presupuestos] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Presupuestos_EstadoPresupuesto_EstadoId] FOREIGN KEY ([EstadoId]) REFERENCES [EstadoPresupuesto] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_Presupuestos_Trabajos_TrabajoId] FOREIGN KEY ([TrabajoId]) REFERENCES [Trabajos] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_Presupuestos_Usuarios_TecnicoId] FOREIGN KEY ([TecnicoId]) REFERENCES [Usuarios] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_Presupuestos_Usuarios_UsuarioDecisionId] FOREIGN KEY ([UsuarioDecisionId]) REFERENCES [Usuarios] ([Id])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE INDEX [IX_Trabajos_SectorId] ON [Trabajos] ([SectorId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE INDEX [IX_Tareas_SectorId] ON [Tareas] ([SectorId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE INDEX [IX_Presupuestos_EstadoId] ON [Presupuestos] ([EstadoId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE INDEX [IX_Presupuestos_TecnicoId] ON [Presupuestos] ([TecnicoId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE INDEX [IX_Presupuestos_TrabajoId] ON [Presupuestos] ([TrabajoId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE INDEX [IX_Presupuestos_UsuarioDecisionId] ON [Presupuestos] ([UsuarioDecisionId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    CREATE INDEX [IX_Sectores_UsuarioId] ON [Sectores] ([UsuarioId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    ALTER TABLE [Tareas] ADD CONSTRAINT [FK_Tareas_Sectores_SectorId] FOREIGN KEY ([SectorId]) REFERENCES [Sectores] ([Id]) ON DELETE CASCADE;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    ALTER TABLE [Trabajos] ADD CONSTRAINT [FK_Trabajos_Sectores_SectorId] FOREIGN KEY ([SectorId]) REFERENCES [Sectores] ([Id]) ON DELETE NO ACTION;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260831214838_cambiosModelos'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260831214838_cambiosModelos', N'10.0.9');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903123654_tecnicoAsignadoTrabajo'
+)
+BEGIN
+    ALTER TABLE [Trabajos] ADD [TecnicosAsignados] nvarchar(max) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903123654_tecnicoAsignadoTrabajo'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260903123654_tecnicoAsignadoTrabajo', N'10.0.9');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    IF EXISTS
+    (
+        SELECT 1
+        FROM sys.foreign_keys
+        WHERE name = N'FK_Sectores_Usuarios_UsuarioId'
+          AND parent_object_id = OBJECT_ID(N'[dbo].[Sectores]')
+    )
+    BEGIN
+        ALTER TABLE [dbo].[Sectores]
+        DROP CONSTRAINT [FK_Sectores_Usuarios_UsuarioId];
+    END
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    IF EXISTS
+    (
+        SELECT 1
+        FROM sys.indexes
+        WHERE name = N'IX_Sectores_UsuarioId'
+          AND object_id = OBJECT_ID(N'[dbo].[Sectores]')
+    )
+    BEGIN
+        DROP INDEX [IX_Sectores_UsuarioId]
+        ON [dbo].[Sectores];
+    END
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    IF COL_LENGTH(N'dbo.Sectores', N'UsuarioId') IS NOT NULL
+    BEGIN
+        ALTER TABLE [dbo].[Sectores]
+        DROP COLUMN [UsuarioId];
+    END
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    ALTER TABLE [Sectores] ADD [PerfilId] int NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    UPDATE s
+    SET s.PerfilId = p.Id
+    FROM [dbo].[Sectores] s
+    INNER JOIN [dbo].[Perfiles] p
+        ON LOWER(LTRIM(RTRIM(s.Nombre))) =
+           LOWER(LTRIM(RTRIM(p.Nombre)))
+    WHERE s.PerfilId IS NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    IF EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Sectores]
+        WHERE PerfilId IS NULL
+    )
+    BEGIN
+        THROW 50001,
+        'Hay sectores sin perfil asociado. Verifique los nombres o asigne PerfilId manualmente.',
+        1;
+    END
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    DECLARE @var7 nvarchar(max);
+    SELECT @var7 = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Sectores]') AND [c].[name] = N'PerfilId');
+    IF @var7 IS NOT NULL EXEC(N'ALTER TABLE [Sectores] DROP CONSTRAINT ' + @var7 + ';');
+    ALTER TABLE [Sectores] ALTER COLUMN [PerfilId] int NOT NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    CREATE INDEX [IX_Sectores_PerfilId] ON [Sectores] ([PerfilId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    ALTER TABLE [Sectores] ADD CONSTRAINT [FK_Sectores_Perfiles_PerfilId] FOREIGN KEY ([PerfilId]) REFERENCES [Perfiles] ([Id]) ON DELETE NO ACTION;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260903141141_sectorPerfil'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260903141141_sectorPerfil', N'10.0.9');
+END;
+
+COMMIT;
+GO
+
