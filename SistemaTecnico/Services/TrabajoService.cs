@@ -864,9 +864,9 @@ namespace SistemaTecnico.Services
                     "El trabajo no está asignado a este técnico."
                 );
 
-            if (trabajo.Estado.Id != EstadosTrabajo.EnProceso)
+            if (trabajo.Estado.Id != EstadosTrabajo.EnProceso && trabajo.Estado.Id != EstadosTrabajo.MejoraSolicitada)
                 throw new InvalidOperationException(
-                    "El trabajo debe estar En proceso."
+                    "El trabajo debe estar En proceso o en MejoraSolicitada."
                 );
 
             if (string.IsNullOrWhiteSpace(dto.TrabajoRealizado))
