@@ -15,12 +15,18 @@ namespace SistemaTecnico.Repositories
 
         public async Task<DashboardResponseDto> ObtenerDashboardAsync()
         {
-            var hoy = DateTime.Today;
+            var hoy = DateTime.UtcNow.Date;
 
             var inicioMes = new DateTime(
-                DateTime.Today.Year,
-                DateTime.Today.Month,
-                1);
+                DateTime.UtcNow.Year,
+                DateTime.UtcNow.Month,
+                1,
+                0,
+                0,
+                0,
+                DateTimeKind.Utc
+            );
+            var manana = hoy.AddDays(1);
 
             return new DashboardResponseDto
             {
@@ -49,8 +55,11 @@ namespace SistemaTecnico.Repositories
                 TotalTecnicos = _context.Usuarios
                     .Count(x => x.Perfil.Id == Perfiles.Tecnico && x.Activo),
 
+
                 TrabajosHoy = _context.Trabajos
-                    .Count(x => x.FechaSolicitud.Date == hoy),
+                    .Count(x =>
+                        x.FechaSolicitud >= hoy &&
+                        x.FechaSolicitud < manana),
 
                 TrabajosMes = _context.Trabajos
                     .Count(x => x.FechaSolicitud >= inicioMes)

@@ -414,26 +414,14 @@ namespace SistemaTecnico.Services
                     .ObtenerTecnicosAsync();
 
             // VALIDAR ACCESO
-            if (
-                rol != "Administrador" &&
-                rol != "Sistemas" &&
-                rol != "Mantenimiento" &&
-                rol != "Monitoreo"
-            )
+            if (rol != "Administrador" && rol != "Sistemas" && rol != "Mantenimiento" && rol != "Monitoreo")
             {
                 if (rol == "Farmacia")
                 {
-                    var usuario =
-                        await _usuarioRepository
-                            .ObtenerPorIdAsync(
-                                usuarioId
-                            );
+                    var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId);
 
-                    if (
-                        usuario == null ||
-                        usuario.Cliente == null ||
-                        t.Cliente.Id != usuario.Cliente.Id
-                    )
+                    if (usuario == null || usuario.Cliente == null ||
+                        t.Cliente.Id != usuario.Cliente.Id)
                     {
                         return null;
                     }
@@ -441,9 +429,7 @@ namespace SistemaTecnico.Services
             }
 
             // COMPARACIONES DE IMÁGENES
-            var comparaciones =
-                await _trabajoImagenComparacionRepository
-                    .ObtenerPorTrabajoAsync(id);
+            var comparaciones = await _trabajoImagenComparacionRepository.ObtenerPorTrabajoAsync(id);
 
             var idsImagenesComparacion =
                 comparaciones?
@@ -466,50 +452,32 @@ namespace SistemaTecnico.Services
                 ?? new HashSet<int>();
 
             // PRESUPUESTOS DEL TRABAJO
-            var presupuestos =
-                await _presupuestoRepository
-                    .ObtenerPorTrabajoAsync(id);
+            var presupuestos = await _presupuestoRepository.ObtenerPorTrabajoAsync(id);
 
-            /*
-             * Presupuesto correspondiente al usuario actual.
-             *
-             * Esto tendrá valor principalmente cuando el usuario
-             * autenticado sea un técnico.
-             */
             var presupuestoUsuario =
-                presupuestos.FirstOrDefault(
-                    presupuesto =>
-                        presupuesto.TrabajoId == t.Id &&
-                        presupuesto.TecnicoId == usuarioId
-                );
+                presupuestos.FirstOrDefault(presupuesto => presupuesto.TrabajoId == t.Id && presupuesto.TecnicoId == usuarioId);
 
             // ESTADO QUE SE MOSTRARÁ EN EL FRONTEND
-            var estadoMostrar =
-                t.Estado.Nombre;
+            var estadoMostrar = t.Estado.Nombre;
+            var estadoColorMostrar = t.Estado.Color;
+            var idEstadoMostrar = t.Estado.Id;
 
-            var estadoColorMostrar =
-                t.Estado.Color;
+            var presupuestosAprobados = await _presupuestoRepository.ObtenerAprobadosAsync();
 
-            var idEstadoMostrar =
-                t.Estado.Id;
-            if (
-                presupuestoUsuario != null &&
-                presupuestoUsuario.EstadoId !=
-                    EstadosPresupuesto.Aprobado &&
-                presupuestoUsuario.EstadoId !=
-                    EstadosPresupuesto.EnRevision
-            )
+            if (presupuestoUsuario != null && presupuestoUsuario.EstadoId != EstadosPresupuesto.Aprobado &&
+                presupuestoUsuario.EstadoId != EstadosPresupuesto.EnRevision)
             {
-                estadoMostrar =
-                    presupuestoUsuario.Estado?.Descripcion
-                    ?? "Sin estado";
-
-                estadoColorMostrar =
-                    "#9b9b9b";
-
-                idEstadoMostrar =
-                    presupuestoUsuario.EstadoId;
+                estadoMostrar = presupuestoUsuario.Estado?.Descripcion ?? "Sin estado";
+                estadoColorMostrar = "#9b9b9b";
+                idEstadoMostrar = presupuestoUsuario.EstadoId;
             }
+            else if (presupuestoUsuario == null && presupuestosAprobados.Any(p => p.TrabajoId == t.Id) && rol == "Tecnico")
+            {
+                estadoMostrar = "Rechazado";
+                estadoColorMostrar = "#9b9b9b";
+                idEstadoMostrar = EstadosPresupuesto.Rechazado;
+            }
+
 
             // PRESUPUESTO APROBADO
             var presupuestoAprobado =
