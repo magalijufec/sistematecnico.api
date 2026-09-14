@@ -66,6 +66,16 @@ namespace SistemaTecnico.Repositories
                 );
         }
 
+        public async Task<IEnumerable<Presupuesto>> ObtenerAprobadosAsync()
+        {
+            return await _context.Presupuestos
+                .AsNoTracking()
+                .Include(p => p.Trabajo)
+                .Include(p => p.Estado)
+                .Where(p => p.Estado.Id == EstadosPresupuesto.Aprobado)
+                .ToListAsync();
+        }
+
         public async Task AgregarAsync(Presupuesto presupuesto)
         {
             await _context.Presupuestos.AddAsync(presupuesto);

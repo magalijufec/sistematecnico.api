@@ -11,5 +11,6 @@ namespace SistemaTecnico.Repositories
         Task AgregarAsync(Presupuesto presupuesto);
         Task GuardarCambiosAsync();
         Task<Presupuesto?> ObtenerAprobadoPorTrabajoAsync(int idTrabajo);
+        Task<IEnumerable<Presupuesto>> ObtenerAprobadosAsync();
     }
 }

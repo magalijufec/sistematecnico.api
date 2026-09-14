@@ -114,9 +114,10 @@ namespace SistemaTecnico.Services
         {
             var trabajos = await ObtenerTrabajosSegunUsuarioAsync();
 
-            var usuarioId = ObtenerUsuarioIdActual();
+            var (usuarioId, rol) = ObtenerUsuarioActual();
 
             var presupuestos = await _presupuestoRepository.ObtenerPorTecnicoAsync(usuarioId);
+            var presupuestosAprobados = await _presupuestoRepository.ObtenerAprobadosAsync();
 
             return trabajos
                 .Where(t => 
@@ -134,12 +135,18 @@ namespace SistemaTecnico.Services
                     var idEstado = t.Estado.Id;
 
                     if (presupuesto != null && presupuesto.Estado.Id != EstadosPresupuesto.Aprobado &&
-                        presupuesto.Estado.Id != EstadosPresupuesto.EnRevision
-                    )
+                        presupuesto.Estado.Id != EstadosPresupuesto.EnRevision)
                     {
                         estado = presupuesto.Estado.Descripcion;
                         color = "#9b9b9b";
                         idEstado = presupuesto.Estado.Id;
+                    }
+                    //si hay un presupuesto aprobado que no es del tecnico
+                    else if (presupuesto == null && presupuestosAprobados.Any(p => p.TrabajoId == t.Id) && rol == "Tecnico")
+                    {
+                        estado = "Rechazado";
+                        color = "#9b9b9b";
+                        idEstado = EstadosPresupuesto.Rechazado;
                     }
 
                     return new TrabajoSolicitudDTO
