@@ -263,6 +263,46 @@ public class TrabajoController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Tecnico")]
+    [HttpPut("{idTrabajo:int}/enviar-facturas-pago")]
+    public async Task<IActionResult> EnviarFacturasPago(int idTrabajo)
+    {
+        try
+        {
+            var actualizado = await _trabajoService.EnviarFacturasPagoAsync(idTrabajo);
+
+            if (!actualizado)
+            {
+                return NotFound(new
+                {
+                    mensaje = "No se encontró el trabajo."
+                });
+            }
+
+            return Ok(new
+            {
+                mensaje = "Las facturas fueron enviadas a pago correctamente."
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                mensaje = ex.Message
+            });
+        }
+    }
+
     [Authorize(Roles = "Administrador,Pagos,Farmacia")]
     [HttpPut("{idTrabajo:int}/facturas/{idFactura:int}/registrar-pago")]
     public async Task<IActionResult> RegistrarPagoFactura(int idTrabajo, int idFactura)
@@ -325,10 +365,7 @@ public class TrabajoController : ControllerBase
         {
             if (dto.FechaFin < dto.FechaInicio)
             {
-                return BadRequest(new
-                {
-                    mensaje = "La fecha de finalización no puede ser anterior a la fecha de inicio."
-                });
+                return BadRequest(new { mensaje = "La fecha de finalización no puede ser anterior a la fecha de inicio."});
             }
 
             var resultado = await _trabajoService.PendienteAprobacionTrabajoAsync(id, dto);

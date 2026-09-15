@@ -30,6 +30,11 @@ namespace SistemaTecnico.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (presupuestoDto.Archivo == null && string.IsNullOrWhiteSpace(presupuestoDto.Descripcion))
+            {
+                return BadRequest("Debe adjuntar un PDF o una descripción.");
+            }
+
             var presupuesto = await _presupuestoService.CrearAsync(presupuestoDto);
 
             if (presupuesto == null)

@@ -107,7 +107,17 @@ public class TrabajoRepository : ITrabajoRepository
             .AsNoTracking()
             .AsSplitQuery()
             .FirstOrDefaultAsync(t => t.Id == id);
-    }    
+    }
+
+    public async Task<Trabajo?> ObtenerPorIdParaFacturaAsync(int idTrabajo)
+    {
+        return await _context.Trabajos
+            .Include(t => t.Cliente)
+            .Include(t => t.Tecnico)
+            .Include(t => t.Tarea)
+            .Include(t => t.Facturas)
+            .FirstOrDefaultAsync(t => t.Id == idTrabajo);
+    }
 
     public async Task AgregarAsync(Trabajo trabajo)
     {
@@ -197,26 +207,16 @@ public class TrabajoRepository : ITrabajoRepository
 
     public async Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos, IWebHostEnvironment env)
     {
-        if (
-            archivos == null ||
-            archivos.Length == 0
-        )
+        if (archivos == null || archivos.Length == 0)
         {
-            throw new ArgumentException(
-                "No se recibió ningún archivo."
-            );
+            throw new ArgumentException("No se recibió ningún archivo.");
         }
 
-        var trabajo =
-            await _context.Trabajos.FindAsync(
-                idTrabajo
-            );
+        var trabajo = await _context.Trabajos.FindAsync(idTrabajo);
 
         if (trabajo == null)
         {
-            throw new KeyNotFoundException(
-                $"No existe el trabajo con ID {idTrabajo}"
-            );
+            throw new KeyNotFoundException($"No existe el trabajo con ID {idTrabajo}");
         }
 
         string carpeta =
@@ -232,31 +232,16 @@ public class TrabajoRepository : ITrabajoRepository
 
         foreach (var archivo in archivos)
         {
-            var extension =
-                Path.GetExtension(
-                    archivo.FileName
-                )
-                .ToLowerInvariant();
+            var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
 
-            var extensionesPermitidas =
-                new[]
-                {
-                ".pdf"
-                };
+            var extensionesPermitidas = new[] { ".pdf" };
 
-            if (
-                !extensionesPermitidas.Contains(
-                    extension
-                )
-            )
+            if (!extensionesPermitidas.Contains(extension))
             {
-                throw new ArgumentException(
-                    $"El archivo {archivo.FileName} no es un PDF."
-                );
+                throw new ArgumentException($"El archivo {archivo.FileName} no es un PDF.");
             }
 
-            string nombreArchivo =
-                $"factura_{Guid.NewGuid()}{extension}";
+            string nombreArchivo = $"factura_{Guid.NewGuid()}{extension}";
 
             string rutaFisica =
                 Path.Combine(
@@ -282,15 +267,13 @@ public class TrabajoRepository : ITrabajoRepository
                         $"{idTrabajo}/" +
                         $"{nombreArchivo}",
 
-                    FechaCarga =
-                        DateTime.Now
+                    FechaCarga = DateTime.UtcNow
                 };
 
             _context.TrabajoFacturas.Add(factura);
         }
 
-        trabajo.EstadoId =
-            EstadosTrabajo.PendientePago;
+        trabajo.EstadoId = EstadosTrabajo.PendienteFacturacion;
 
         await _context.SaveChangesAsync();
     }

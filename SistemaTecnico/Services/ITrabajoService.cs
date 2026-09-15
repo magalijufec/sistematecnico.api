@@ -23,5 +23,6 @@ namespace SistemaTecnico.Services
         Task<RegistrarPagoFacturaResponseDto> RegistrarPagoAsync(int idTrabajo, int idFactura);
         Task<bool> SolicitarMejoraAsync(int id, SolicitarMejoraDTO dto);
         Task<byte[]> GenerarInformePdfAsync(int id);
+        Task<bool> EnviarFacturasPagoAsync(int idTrabajo);
     }
 }

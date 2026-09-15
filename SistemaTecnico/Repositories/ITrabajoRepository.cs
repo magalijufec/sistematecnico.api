@@ -10,6 +10,7 @@ public interface ITrabajoRepository
     Task<IEnumerable<Trabajo>> ObtenerPorClienteAsync(int idCliente);
     Task<Trabajo?> ObtenerPorIdAsync(int id);
     Task AgregarAsync(Trabajo trabajo);
+    Task<Trabajo?> ObtenerPorIdParaFacturaAsync(int idTrabajo);
     Task ActualizarAsync(Trabajo trabajo);
     Task EliminarAsync(Trabajo trabajo);
     Task<bool> ExisteAsync(int id);

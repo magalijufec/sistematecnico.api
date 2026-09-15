@@ -34,7 +34,7 @@ namespace SistemaTecnico.Services
                     Descripcion = p.Descripcion,
                     TecnicoId = p.TecnicoId,
                     Tecnico = p.Tecnico?.NombreApellido ?? "Técnico no disponible",
-                    FechaCarga = FechaHelper.AhoraArgentina(p.FechaCarga),
+                    FechaCarga = p.FechaCarga,
                     TrabajoId = p.TrabajoId,
                     EstadoId = p.EstadoId,
                     Estado = p.Estado?.Descripcion ?? "Sin estado"
@@ -63,10 +63,17 @@ namespace SistemaTecnico.Services
                     Descripcion = dto.Descripcion
                 };
 
+            if (trabajo.EstadoId == EstadosTrabajo.PendientePresupuestos)
+            {
+                await _trabajoRepository.CambiarEstadoAsync(trabajo.Id, EstadosTrabajo.PendienteAprobacionPresupuesto);
+            }
+
             await _presupuestoRepository.AgregarAsync(presupuesto);
             await _presupuestoRepository.GuardarCambiosAsync();
 
-            var carpeta =
+            if (dto.Archivo != null)
+            {
+                var carpeta =
                 Path.Combine(
                     _environment.WebRootPath,
                     "uploads",
@@ -74,26 +81,23 @@ namespace SistemaTecnico.Services
                     presupuesto.Id.ToString()
                 );
 
-            Directory.CreateDirectory(carpeta);
+                Directory.CreateDirectory(carpeta);
 
-            var extension =  Path.GetExtension(dto.Archivo.FileName);
-            var nombreArchivo = $"{DateTime.Now:yyMMddHHmmss}{extension}";
+                var extension = Path.GetExtension(dto.Archivo.FileName);
+                var nombreArchivo = $"{DateTime.UtcNow:yyMMddHHmmss}{extension}";
 
-            var rutaFisica = Path.Combine(carpeta, nombreArchivo);
+                var rutaFisica = Path.Combine(carpeta, nombreArchivo);
 
-            using (var stream = new FileStream(rutaFisica, FileMode.Create))
-            {
-                await dto.Archivo.CopyToAsync(stream);
+                using (var stream = new FileStream(rutaFisica, FileMode.Create))
+                {
+                    await dto.Archivo.CopyToAsync(stream);
+                }
+
+                presupuesto.RutaArchivo = $"/uploads/presupuestos/{presupuesto.Id}/{nombreArchivo}";
+
+                await _presupuestoRepository.GuardarCambiosAsync();
             }
-
-            if (trabajo.EstadoId == EstadosTrabajo.PendientePresupuestos)
-            {
-                await _trabajoRepository.CambiarEstadoAsync(trabajo.Id, EstadosTrabajo.PendienteAprobacionPresupuesto);
-            }
-
-            presupuesto.RutaArchivo = $"/uploads/presupuestos/{presupuesto.Id}/{nombreArchivo}";
-
-            await _presupuestoRepository.GuardarCambiosAsync();
+            
             return presupuesto;
         }
 

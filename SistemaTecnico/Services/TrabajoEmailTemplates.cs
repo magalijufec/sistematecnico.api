@@ -188,7 +188,7 @@ namespace SistemaTecnico.Services
 
             <p>
                 El trabajo realizado ha sido revisado
-                y aprobado por el sector de Sistemas.
+                y aprobado por el sector correspondiente.
             </p>
 
             <div class="info">
@@ -340,11 +340,11 @@ namespace SistemaTecnico.Services
         // ============================================================
 
         public static string MejoraTrabajoSolicitada(
-    string nombreTecnico,
-    int trabajoId,
-    string cliente,
-    string tarea,
-    string comentario)
+        string nombreTecnico,
+        int trabajoId,
+        string cliente,
+        string tarea,
+        string comentario)
         {
             var contenido = $$"""
         <p>
@@ -352,7 +352,7 @@ namespace SistemaTecnico.Services
         </p>
 
         <p>
-            Sistemas ha solicitado una mejora sobre el trabajo
+            Se ha solicitado una mejora sobre el trabajo
             <strong>#{{trabajoId}}</strong>.
         </p>
 
@@ -379,8 +379,8 @@ namespace SistemaTecnico.Services
         </div>
 
         <p>
-            El trabajo volvió al estado
-            <strong>Pendiente</strong>.
+            El trabajo cambió al estado
+            <strong>MejoraSolicitada</strong>.
         </p>
 
         <p>
@@ -396,121 +396,121 @@ namespace SistemaTecnico.Services
         }
 
         private static string Layout(
-    string titulo,
-    string contenido)
-        {
-            return $$"""
-<!DOCTYPE html>
-<html>
+        string titulo,
+        string contenido)
+            {
+                return $$"""
+    <!DOCTYPE html>
+    <html>
 
-<head>
+    <head>
 
-    <meta charset="UTF-8">
+        <meta charset="UTF-8">
 
-    <style>
+        <style>
 
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: #f4f6f8;
-            margin: 0;
-            padding: 0;
-        }
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                background-color: #f4f6f8;
+                margin: 0;
+                padding: 0;
+            }
 
-        .container {
-            max-width: 600px;
-            margin: 30px auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+            .container {
+                max-width: 600px;
+                margin: 30px auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
 
-        .header {
-            background-color: #1976d2;
-            color: #ffffff;
-            padding: 20px;
-            text-align: center;
-        }
+            .header {
+                background-color: #1976d2;
+                color: #ffffff;
+                padding: 20px;
+                text-align: center;
+            }
 
-        .header h1 {
-            margin: 0;
-            font-size: 22px;
-        }
+            .header h1 {
+                margin: 0;
+                font-size: 22px;
+            }
 
-        .content {
-            padding: 30px;
-            color: #333333;
-            line-height: 1.6;
-        }
+            .content {
+                padding: 30px;
+                color: #333333;
+                line-height: 1.6;
+            }
 
-        .content h2 {
-            margin-top: 0;
-            color: #1976d2;
-        }
+            .content h2 {
+                margin-top: 0;
+                color: #1976d2;
+            }
 
-        .info {
-            background-color: #f5f5f5;
-            border-left: 4px solid #1976d2;
-            padding: 15px;
-            margin: 20px 0;
-        }
+            .info {
+                background-color: #f5f5f5;
+                border-left: 4px solid #1976d2;
+                padding: 15px;
+                margin: 20px 0;
+            }
 
-        .info p {
-            margin: 5px 0;
-        }
+            .info p {
+                margin: 5px 0;
+            }
 
-        .footer {
-            background-color: #eeeeee;
-            padding: 15px;
-            text-align: center;
-            font-size: 12px;
-            color: #666666;
-        }
+            .footer {
+                background-color: #eeeeee;
+                padding: 15px;
+                text-align: center;
+                font-size: 12px;
+                color: #666666;
+            }
 
-    </style>
+        </style>
 
-</head>
+    </head>
 
-<body>
+    <body>
 
-    <div class="container">
+        <div class="container">
 
-        <div class="header">
+            <div class="header">
 
-            <h1>
-                Sistema Técnico
-            </h1>
+                <h1>
+                    Sistema Técnico
+                </h1>
+
+            </div>
+
+            <div class="content">
+
+                <h2>
+                    {{titulo}}
+                </h2>
+
+                {{contenido}}
+
+            </div>
+
+            <div class="footer">
+
+                Este correo fue generado automáticamente
+                por el Sistema Técnico.
+
+                <br>
+
+                Por favor, no respondas a este correo.
+
+            </div>
 
         </div>
 
-        <div class="content">
+    </body>
 
-            <h2>
-                {{titulo}}
-            </h2>
-
-            {{contenido}}
-
-        </div>
-
-        <div class="footer">
-
-            Este correo fue generado automáticamente
-            por el Sistema Técnico.
-
-            <br>
-
-            Por favor, no respondas a este correo.
-
-        </div>
-
-    </div>
-
-</body>
-
-</html>
-""";
-        }
+    </html>
+    """;
+            }
     }
 
   }

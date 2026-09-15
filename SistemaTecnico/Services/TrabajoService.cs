@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using QuestPDF.Fluent;
 using SistemaTecnico.DTO;
@@ -153,8 +152,7 @@ namespace SistemaTecnico.Services
                     {
                         Id = t.Id,
 
-                        FechaSolicitud =
-                            FechaHelper.AhoraArgentina(t.FechaSolicitud),
+                        FechaSolicitud =t.FechaSolicitud,
 
                         IdEstado =
                             idEstado,
@@ -324,9 +322,9 @@ namespace SistemaTecnico.Services
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
-                    FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
-                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio),
-                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado),
+                    FechaSolicitud = t.FechaSolicitud,
+                    FechaInicio = t.FechaInicio,
+                    FechaFinalizado = t.FechaFinalizado,
                     IdCliente = t.Cliente.Id,
                     Cliente =
                         t.Cliente.NroCliente +
@@ -345,8 +343,8 @@ namespace SistemaTecnico.Services
                             {
                                 Id = x.Id,
                                 RutaArchivo = x.RutaArchivo,
-                                FechaCarga = FechaHelper.AhoraArgentina(x.FechaCarga),
-                                FechaPagado = FechaHelper.AhoraArgentina(x.FechaPagado)
+                                FechaCarga = x.FechaCarga,
+                                FechaPagado = x.FechaPagado
                             })
                             .ToList(),
                                     })
@@ -365,10 +363,10 @@ namespace SistemaTecnico.Services
                 .Select(t => new TrabajoFinalizadoDTO
                 {
                     Id = t.Id,
-                    FechaSolicitud = FechaHelper.AhoraArgentina(t.FechaSolicitud),
-                    FechaInicio = FechaHelper.AhoraArgentina(t.FechaInicio),
-                    FechaFinalizado = FechaHelper.AhoraArgentina(t.FechaFinalizado),
-                    FechaPagado = FechaHelper.AhoraArgentina(t.FechaPagado),
+                    FechaSolicitud = t.FechaSolicitud,
+                    FechaInicio = t.FechaInicio,
+                    FechaFinalizado = t.FechaFinalizado,
+                    FechaPagado = t.FechaPagado,
                     IdCliente = t.Cliente.Id,
                     Cliente =
                         t.Cliente.NroCliente +
@@ -508,20 +506,11 @@ namespace SistemaTecnico.Services
                 Id =
                     t.Id,
 
-                FechaSolicitud =
-                    FechaHelper.AhoraArgentina(
-                        t.FechaSolicitud
-                    ),
+                FechaSolicitud = t.FechaSolicitud,
 
-                FechaInicio =
-                    FechaHelper.AhoraArgentina(
-                        t.FechaInicio
-                    ),
+                FechaInicio =t.FechaInicio,
 
-                FechaFinalizado =
-                    FechaHelper.AhoraArgentina(
-                        t.FechaFinalizado
-                    ),
+                FechaFinalizado = t.FechaFinalizado,
 
                 // Estado calculado
                 Estado =
@@ -594,15 +583,9 @@ namespace SistemaTecnico.Services
                                     RutaArchivo =
                                         factura.RutaArchivo,
 
-                                    FechaCarga =
-                                        FechaHelper.AhoraArgentina(
-                                            factura.FechaCarga
-                                        ),
+                                    FechaCarga =factura.FechaCarga,
 
-                                    FechaPagado =
-                                        FechaHelper.AhoraArgentina(
-                                            factura.FechaPagado
-                                        )
+                                    FechaPagado =factura.FechaPagado
                                 }
                         )
                         .ToList(),
@@ -849,40 +832,30 @@ namespace SistemaTecnico.Services
             var (usuarioId, rol) = ObtenerUsuarioActual();
 
             if (rol != "Tecnico")
-                throw new UnauthorizedAccessException(
-                    "Solo un técnico puede finalizar un trabajo."
-                );
+                throw new UnauthorizedAccessException("Solo un técnico puede finalizar un trabajo.");
 
-            var trabajo =
-                await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
+            var trabajo =  await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
 
             if (trabajo == null)
                 return false;
 
-            if (trabajo.Tecnico.Id != usuarioId)
-                throw new UnauthorizedAccessException(
-                    "El trabajo no está asignado a este técnico."
-                );
+            if (trabajo.Tecnico?.Id != usuarioId)
+                throw new UnauthorizedAccessException("El trabajo no está asignado a este técnico.");
 
             if (trabajo.Estado.Id != EstadosTrabajo.EnProceso && trabajo.Estado.Id != EstadosTrabajo.MejoraSolicitada)
-                throw new InvalidOperationException(
-                    "El trabajo debe estar En proceso o en MejoraSolicitada."
-                );
+                throw new InvalidOperationException("El trabajo debe estar En proceso o en MejoraSolicitada.");
 
-            if (string.IsNullOrWhiteSpace(dto.TrabajoRealizado))
-            {
-                throw new InvalidOperationException(
-                    "Debe indicar el trabajo realizado."
-                );
-            }
+            if (string.IsNullOrWhiteSpace(dto.TrabajoRealizado))            
+                throw new InvalidOperationException("Debe indicar el trabajo realizado.");            
 
             trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendienteAprobacionTrabajo);
             trabajo.TrabajoRealizado = dto.TrabajoRealizado;
-            trabajo.FechaInicio = FechaHelper.AhoraArgentina(dto.FechaInicio);
-            trabajo.FechaFinalizado = FechaHelper.AhoraArgentina(dto.FechaFin);
+            trabajo.FechaInicio = dto.FechaInicio;
+            trabajo.FechaFinalizado = dto.FechaFin;
+
+            Console.WriteLine(trabajo.FechaInicio);
 
             await _trabajoRepository.ActualizarAsync(trabajo);
-
             await _trabajoRepository.GuardarCambiosAsync();
 
             //se le avisa al sector correspondiente que finalizo el trabajo y que debe aprobarlo para que se pueda cargar la factura
@@ -908,7 +881,7 @@ namespace SistemaTecnico.Services
                             $"Trabajo finalizado #{trabajo.Id} - Pendiente aprobacion",
                             html,
                             adjuntos);
-                }
+             }
 
             return true;
         }
@@ -1020,70 +993,9 @@ namespace SistemaTecnico.Services
 
         public async Task SubirFacturasAsync(int idTrabajo, IFormFile[] archivos)
         {
-            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
-            var usuariosPagos = await _usuarioRepository.ObtenerPorPerfil(Perfiles.Pagos); //pagos
-            var usuariosFarmacia = await _usuarioRepository.ObtenerPorClienteAsync(trabajo.ClienteId);
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);          
 
-            var destinatarios = usuariosPagos
-                                    .Concat( usuariosFarmacia ?? Enumerable.Empty<Usuario>())
-                                    .Where(x =>!string.IsNullOrWhiteSpace(x.Email))
-                                    .Select(x =>x.Email!.Trim())
-                                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                                    .ToList();
-
-            await _trabajoRepository.SubirFacturasAsync(idTrabajo, archivos, _environment);
-
-            var html = TrabajoEmailTemplates
-                    .FacturaPendientePago(
-                        trabajo.Id,
-                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
-                        trabajo.Tecnico.NombreApellido,
-                        trabajo.Tarea.Descripcion
-                    );
-
-            var trabajoUpdated = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
-            var facturas = trabajoUpdated.Facturas;
-            var adjuntos = new List<ArchivoAdjunto>();
-
-            foreach (var factura in facturas)
-            {
-                var rutaFisica = Path.Combine(
-                    _environment.WebRootPath,
-                    factura.RutaArchivo
-                        .TrimStart('/')
-                        .Replace(
-                            "/",
-                            Path.DirectorySeparatorChar.ToString()
-                        )
-                );
-
-                if (!File.Exists(rutaFisica))
-                    continue;
-
-                adjuntos.Add(
-                    new ArchivoAdjunto
-                    {
-                        Nombre = Path.GetFileName(
-                            rutaFisica
-                        ),
-
-                        Archivo =
-                            await File.ReadAllBytesAsync(
-                                rutaFisica
-                            )
-                    }
-                );
-            }
-
-            foreach (var email in destinatarios)
-            {
-                await _emailService.EnviarAsync(
-                    email,
-                    $"Factura pendiente de pago #{trabajo.Id}",
-                    html,
-                    adjuntos
-                );
-            }
+            await _trabajoRepository.SubirFacturasAsync(idTrabajo, archivos, _environment);            
         }
 
         public async Task<RegistrarPagoFacturaResponseDto> RegistrarPagoAsync(int idTrabajo, int idFactura)
@@ -1246,7 +1158,7 @@ namespace SistemaTecnico.Services
                 FacturaId =
                     factura.Id,
 
-                FechaPagadoFactura = FechaHelper.AhoraArgentina(factura.FechaPagado),
+                FechaPagadoFactura = factura.FechaPagado,
 
                 TrabajoFinalizado =
                     todasPagadas,
@@ -1485,13 +1397,13 @@ namespace SistemaTecnico.Services
                                     FilaPdf(table, "Nº Trabajo", trabajo.Id.ToString());
                                     FilaPdf(table, "Estado", trabajo.Estado?.Nombre ?? "-");
                                     FilaPdf(table, "Fecha solicitud",
-                                        trabajo.FechaSolicitud.ToString("dd/MM/yyyy HH:mm"));
+                                        FechaHelper.AhoraArgentina(trabajo.FechaSolicitud).ToString("dd/MM/yy HH:mm"));
                                     FilaPdf(table, "Fecha inicio",
-                                        trabajo.FechaInicio?.ToString("dd/MM/yyyy HH:mm") ?? "-");
+                                        FechaHelper.AhoraArgentina(trabajo.FechaInicio)?.ToString("dd/MM/yy HH:mm") ?? "-");
                                     FilaPdf(table, "Fecha finalización",
-                                        trabajo.FechaFinalizado?.ToString("dd/MM/yyyy HH:mm") ?? "-");
+                                        FechaHelper.AhoraArgentina(trabajo.FechaFinalizado)?.ToString("dd/MM/yy HH:mm") ?? "-");
                                     FilaPdf(table, "Fecha pago",
-                                        trabajo.FechaPagado?.ToString("dd/MM/yyyy HH:mm") ?? "-");
+                                        FechaHelper.AhoraArgentina(trabajo.FechaPagado)?.ToString("dd/MM/yy HH:mm") ?? "-");
                                 });
 
                             // 2. DATOS DE LA SOLICITUD
@@ -1836,6 +1748,77 @@ namespace SistemaTecnico.Services
                 .BorderBottom(1)
                 .Padding(5)
                 .Text(string.IsNullOrWhiteSpace(valor) ? "-" : valor);
+        }
+
+        public async Task<bool> EnviarFacturasPagoAsync(int idTrabajo)
+        {
+            var trabajo = await _trabajoRepository.ObtenerPorIdParaFacturaAsync(idTrabajo);
+            var usuariosPagos = await _usuarioRepository.ObtenerPorPerfil(Perfiles.Pagos); //pagos
+            var usuariosFarmacia = await _usuarioRepository.ObtenerPorClienteAsync(trabajo.ClienteId);
+
+            var destinatarios = usuariosPagos
+                                    .Concat(usuariosFarmacia ?? Enumerable.Empty<Usuario>())
+                                    .Where(x => !string.IsNullOrWhiteSpace(x.Email))
+                                    .Select(x => x.Email!.Trim())
+                                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                                    .ToList();
+
+            if (trabajo == null) return false;
+            var (usuarioId, rol) = ObtenerUsuarioActual();
+
+            var estadoPermitido = trabajo.EstadoId == EstadosTrabajo.Aprobado || trabajo.EstadoId == EstadosTrabajo.PendienteFacturacion;
+
+            if (!estadoPermitido)
+                throw new InvalidOperationException("El trabajo no se encuentra habilitado para enviar facturas.");
+
+            if (trabajo.Facturas == null || trabajo.Facturas.Count == 0)
+                throw new InvalidOperationException("Debe cargar al menos una factura antes de enviarlas a pago.");
+
+            trabajo.Estado = await _estadoRepository.ObtenerPorIdAsync(EstadosTrabajo.PendientePago);
+
+            trabajo.EstadoId = EstadosTrabajo.PendientePago;
+            await _trabajoRepository.ActualizarAsync(trabajo);
+            await _trabajoRepository.GuardarCambiosAsync();
+
+            var html = TrabajoEmailTemplates
+                    .FacturaPendientePago(trabajo.Id,
+                        $"{trabajo.Cliente?.NroCliente} - {trabajo.Cliente?.Nombre}",
+                        trabajo.Tecnico.NombreApellido,
+                        trabajo.Tarea.Descripcion);
+
+            var adjuntos = new List<ArchivoAdjunto>();
+
+            foreach (var factura in trabajo.Facturas)
+            {
+                var rutaFisica = Path.Combine(
+                    _environment.WebRootPath,
+                    factura.RutaArchivo
+                        .TrimStart('/')
+                        .Replace("/", Path.DirectorySeparatorChar.ToString()));
+
+                if (!File.Exists(rutaFisica))
+                    continue;
+
+                adjuntos.Add(
+                    new ArchivoAdjunto
+                    {
+                        Nombre = Path.GetFileName(rutaFisica),
+                        Archivo = await File.ReadAllBytesAsync(rutaFisica)
+                    }
+                );
+            }
+
+            foreach (var email in destinatarios)
+            {
+                await _emailService.EnviarAsync(
+                    email,
+                    $"Factura pendiente de pago #{trabajo.Id}",
+                    html,
+                    adjuntos
+                );
+            }
+
+            return true;
         }
     }
 }
