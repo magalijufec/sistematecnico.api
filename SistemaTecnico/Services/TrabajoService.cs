@@ -1281,31 +1281,21 @@ namespace SistemaTecnico.Services
             if (!puedeVerTodos)
             {
                 if (usuarioActual.Rol == "Tecnico" && trabajo.Tecnico?.Id != usuarioActual.UsuarioId)
-                {
-                    throw new UnauthorizedAccessException(
-                        "No tiene permiso para consultar este trabajo."
-                    );
-                }
+                    throw new UnauthorizedAccessException("No tiene permiso para consultar este trabajo.");
 
                 if (usuarioActual.Rol == "Farmacia")
                 {
                     var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioActual.UsuarioId);
 
                     if (usuario?.Cliente?.Id == null || trabajo.Cliente?.Id != usuario.Cliente.Id)
-                    {
-                        throw new UnauthorizedAccessException(
-                            "No tiene permiso para consultar este trabajo."
-                        );
-                    }
+                        throw new UnauthorizedAccessException("No tiene permiso para consultar este trabajo.");
                 }
             }
 
             // Todas las imágenes del trabajo.
             var todasLasImagenes =
                 (await _imagenService.ObtenerPorTrabajo(id))?
-                    .Where(imagen =>
-                        imagen != null &&
-                        !string.IsNullOrWhiteSpace(imagen.RutaArchivo))
+                    .Where(imagen => imagen != null && !string.IsNullOrWhiteSpace(imagen.RutaArchivo))
                     .OrderBy(imagen => imagen.Id)
                     .ToList()
                 ?? new List<Imagen>();
@@ -1314,9 +1304,7 @@ namespace SistemaTecnico.Services
             var comparaciones =
                 (await _trabajoImagenComparacionRepository
                     .ObtenerPorTrabajoAsync(id))?
-                    .Where(comparacion =>
-                        comparacion.ImagenAntesId.HasValue ||
-                        comparacion.ImagenDespuesId.HasValue)
+                    .Where(comparacion => comparacion.ImagenAntesId.HasValue || comparacion.ImagenDespuesId.HasValue)
                     .OrderBy(comparacion => comparacion.Id)
                     .ToList()
                 ?? new List<TrabajoImagenComparacion>();
@@ -1324,10 +1312,7 @@ namespace SistemaTecnico.Services
             // Índice para resolver Antes/Después aunque las navegaciones EF no estén cargadas.
             var imagenesPorId = todasLasImagenes
                 .GroupBy(imagen => imagen.Id)
-                .ToDictionary(
-                    grupo => grupo.Key,
-                    grupo => grupo.First()
-                );
+                .ToDictionary(grupo => grupo.Key, grupo => grupo.First());
 
             var idsImagenesComparacion = comparaciones
                 .SelectMany(comparacion => new int?[]
@@ -1454,9 +1439,7 @@ namespace SistemaTecnico.Services
                                         .PaddingTop(10)
                                         .Row(row =>
                                         {
-                                            for (var indice = 0;
-                                                 indice < grupo.Length;
-                                                 indice++)
+                                            for (var indice = 0; indice < grupo.Length; indice++)
                                             {
                                                 var imagen = grupo[indice];
                                                 var item = row.RelativeItem();

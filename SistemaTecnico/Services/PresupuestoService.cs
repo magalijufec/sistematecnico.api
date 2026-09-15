@@ -85,7 +85,6 @@ namespace SistemaTecnico.Services
 
                 var extension = Path.GetExtension(dto.Archivo.FileName);
                 var nombreArchivo = $"{DateTime.UtcNow:yyMMddHHmmss}{extension}";
-
                 var rutaFisica = Path.Combine(carpeta, nombreArchivo);
 
                 using (var stream = new FileStream(rutaFisica, FileMode.Create))
@@ -106,9 +105,7 @@ namespace SistemaTecnico.Services
             var presupuesto = await _presupuestoRepository.ObtenerPorIdAsync(id);
 
             if (presupuesto == null)
-            {
                 throw new Exception("El presupuesto no existe.");
-            }
 
             presupuesto.UsuarioDecisionId = dto.IdUsuarioDecision;
             presupuesto.FechaDecision = DateTime.UtcNow;
@@ -136,36 +133,21 @@ namespace SistemaTecnico.Services
                     }
                 }
             }
-
             await _presupuestoRepository.GuardarCambiosAsync();
-
             return presupuesto;
         }
 
         public async Task<bool> RechazarAsync(int presupuestoId, string motivo)
         {
-            var presupuesto =
-                await _presupuestoRepository
-                    .ObtenerPorIdAsync(
-                        presupuestoId
-                    );
+            var presupuesto = await _presupuestoRepository.ObtenerPorIdAsync(presupuestoId);
 
             if (presupuesto == null)
                 return false;
 
-            presupuesto.EstadoId =
-                EstadosPresupuesto
-                    .Rechazado;
-
-            presupuesto.MotivoRechazo =
-                motivo;
-
-            presupuesto.FechaDecision =
-                DateTime.UtcNow;
-
-            await _presupuestoRepository
-                .GuardarCambiosAsync();
-
+            presupuesto.EstadoId = EstadosPresupuesto.Rechazado;
+            presupuesto.MotivoRechazo = motivo;
+            presupuesto.FechaDecision = DateTime.UtcNow;
+            await _presupuestoRepository.GuardarCambiosAsync();
             return true;
         }
 

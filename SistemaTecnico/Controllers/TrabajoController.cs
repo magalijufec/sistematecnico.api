@@ -123,12 +123,7 @@ public class TrabajoController : ControllerBase
     {
         try
         {
-            var actualizado =
-                await _trabajoService
-                    .CargarMaterialesAsync(
-                        idTrabajo,
-                        dto.Materiales
-                    );
+            var actualizado = await _trabajoService.CargarMaterialesAsync(idTrabajo, dto.Materiales);
 
             if (!actualizado)
             {
@@ -171,11 +166,7 @@ public class TrabajoController : ControllerBase
     [HttpPut("{idTrabajo:int}/materiales-enviados")]
     public async Task<IActionResult> MarcarMaterialesEnviados(int idTrabajo)
     {
-        var actualizado =
-            await _trabajoService
-                .MarcarMaterialesEnviadosAsync(
-                    idTrabajo
-                );
+        var actualizado = await _trabajoService.MarcarMaterialesEnviadosAsync(idTrabajo);
 
         if (!actualizado)
         {
@@ -309,13 +300,7 @@ public class TrabajoController : ControllerBase
     {
         try
         {
-            var resultado =
-                await _trabajoService
-                    .RegistrarPagoAsync(
-                        idTrabajo,
-                        idFactura
-                    );
-
+            var resultado = await _trabajoService.RegistrarPagoAsync(idTrabajo, idFactura);
             return Ok(resultado);
         }
         catch (KeyNotFoundException ex)
@@ -423,8 +408,7 @@ public class TrabajoController : ControllerBase
     {
         try
         {
-            var resultado =
-                await _trabajoService.SolicitarMejoraAsync(id, dto);
+            var resultado = await _trabajoService.SolicitarMejoraAsync(id, dto);
 
             if (!resultado)
                 return NotFound();
