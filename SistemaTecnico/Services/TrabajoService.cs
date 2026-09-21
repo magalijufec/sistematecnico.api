@@ -67,32 +67,21 @@ namespace SistemaTecnico.Services
         {
             var usuario = _httpContextAccessor.HttpContext?.User;
 
-            if (usuario == null ||
-                !usuario.Identity?.IsAuthenticated == true)
+            if (usuario == null || !usuario.Identity?.IsAuthenticated == true)
             {
-                throw new UnauthorizedAccessException(
-                    "El usuario no está autenticado."
-                );
+                throw new UnauthorizedAccessException("El usuario no está autenticado.");
             }
 
-            var usuarioIdClaim =
-                usuario.FindFirst(ClaimTypes.NameIdentifier);
+            var usuarioIdClaim = usuario.FindFirst(ClaimTypes.NameIdentifier);
 
-            var rolClaim =
-                usuario.FindFirst(ClaimTypes.Role);
+            var rolClaim = usuario.FindFirst(ClaimTypes.Role);
 
-            if (usuarioIdClaim == null ||
-                rolClaim == null)
+            if (usuarioIdClaim == null || rolClaim == null)
             {
-                throw new UnauthorizedAccessException(
-                    "No se pudo obtener la información del usuario."
-                );
+                throw new UnauthorizedAccessException("No se pudo obtener la información del usuario.");
             }
 
-            return (
-                int.Parse(usuarioIdClaim.Value),
-                rolClaim.Value
-            );
+            return (int.Parse(usuarioIdClaim.Value), rolClaim.Value);
         }
 
         private string ObtenerRolActual()
@@ -1000,31 +989,18 @@ namespace SistemaTecnico.Services
 
         public async Task<RegistrarPagoFacturaResponseDto> RegistrarPagoAsync(int idTrabajo, int idFactura)
         {
-            var (_, rol) =
-                ObtenerUsuarioActual();
+            var (_, rol) = ObtenerUsuarioActual();
 
-            if (
-                rol != "Pagos" &&
-                rol != "Administrador" &&
-                rol != "Farmacia"
-            )
+            if (rol != "Pagos" && rol != "Administrador" && rol != "Farmacia")
             {
-                throw new UnauthorizedAccessException(
-                    "Solo Pagos, Farmacia o Administrador pueden registrar el pago."
-                );
+                throw new UnauthorizedAccessException("Solo Pagos, Farmacia o Administrador pueden registrar el pago.");
             }
 
-            var trabajo =
-                await _trabajoRepository
-                    .ObtenerPorIdAsync(
-                        idTrabajo
-                    );
+            var trabajo = await _trabajoRepository.ObtenerPorIdAsync(idTrabajo);
 
             if (trabajo == null)
             {
-                throw new KeyNotFoundException(
-                    $"No existe el trabajo #{idTrabajo}."
-                );
+                throw new KeyNotFoundException($"No existe el trabajo #{idTrabajo}.");
             }
 
             if (

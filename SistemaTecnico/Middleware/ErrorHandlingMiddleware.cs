@@ -19,6 +19,23 @@ namespace SistemaTecnico.Middleware
             {
                 await _next(context);
             }
+
+            catch (UnauthorizedAccessException ex)
+            {
+                context.Response.StatusCode =
+                    StatusCodes
+                        .Status401Unauthorized;
+
+                context.Response.ContentType =
+                    "application/json";
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        mensaje = ex.Message
+                    }
+                );
+            }
             catch (Exception ex)
             {
                 try

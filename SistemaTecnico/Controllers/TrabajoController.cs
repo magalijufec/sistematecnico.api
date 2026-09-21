@@ -18,6 +18,7 @@ public class TrabajoController : ControllerBase
         _imagenService = imagenService;
     }
 
+    [Authorize]
     [HttpGet("solicitudes")]
     public async Task<IActionResult> GetSolicitudesDeTrabajo()
     {
@@ -25,6 +26,7 @@ public class TrabajoController : ControllerBase
         return Ok(trabajos);
     }
 
+    [Authorize]
     [HttpGet("no-finalizados")]
     public async Task<IActionResult> GetNoFinalizados()
     {
@@ -33,6 +35,7 @@ public class TrabajoController : ControllerBase
         return Ok(trabajos);
     }
 
+    [Authorize]
     [HttpGet("pendiente-pago")]
     public async Task<IActionResult> GetPendientesPago()
     {
@@ -41,6 +44,7 @@ public class TrabajoController : ControllerBase
         return Ok(trabajos);
     }
 
+    [Authorize]
     [HttpGet("pagados")]
     public async Task<IActionResult> GetPagados()
     {
@@ -49,6 +53,7 @@ public class TrabajoController : ControllerBase
         return Ok(trabajos);
     }
 
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
     {
@@ -75,6 +80,7 @@ public class TrabajoController : ControllerBase
             trabajo);
     }
 
+    [Authorize]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Put(int id, [FromBody] TrabajoUpdateDto dto)
     {
