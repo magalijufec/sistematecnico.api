@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SistemaTecnico.Data;
@@ -11,9 +12,11 @@ using SistemaTecnico.Data;
 namespace SistemaTecnico.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260922191854_gestionIncidencias")]
+    partial class gestionIncidencias
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -305,10 +308,6 @@ namespace SistemaTecnico.Migrations
                     b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Comentario")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
                     b.Property<int>("DestinoId")
                         .HasColumnType("integer");
 
@@ -320,9 +319,6 @@ namespace SistemaTecnico.Migrations
 
                     b.Property<DateTime?>("FechaFinalizado")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("Guardia")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Otro")
                         .HasMaxLength(500)

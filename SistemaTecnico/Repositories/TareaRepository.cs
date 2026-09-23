@@ -21,14 +21,20 @@ namespace SistemaTecnico.Repositories
 
         public async Task<IEnumerable<Tarea>> ObtenerTodasAsync()
         {
-            return await _context.Tareas
+            return await _context.Tareas.Where(x => !x.Soporte)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Tarea>> ObtenerSoporte()
+        {
+            return await _context.Tareas.Where(x => x.Soporte)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Tarea>> ObtenerPorSectorAsync(int sectorId)
         {
             return _context.Tareas
-                .Where(x => x.SectorId == sectorId)
+                .Where(x => x.SectorId == sectorId && !x.Soporte)
                 .OrderBy(x => x.Descripcion)
                 .ToList();
         }

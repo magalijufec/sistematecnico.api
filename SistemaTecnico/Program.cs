@@ -9,6 +9,7 @@ using SistemaTecnico.Models;
 using SistemaTecnico.Repositories;
 using SistemaTecnico.Services;
 using QuestPDF.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -84,6 +85,8 @@ builder.Services.AddScoped<ICiudadRepository, CiudadRepository>();
 builder.Services.AddScoped<ICiudadService, CiudadService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IIncidenciaRepository, IncidenciaRepository>();
+builder.Services.AddScoped<IIncidenciaService, IncidenciaService>();
 builder.Services.AddScoped<ITrabajoImagenComparacionRepository, TrabajoImagenComparacionRepository>();
 builder.Services.AddScoped<ITrabajoImagenComparacionService, TrabajoImagenComparacionService>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
@@ -147,4 +150,24 @@ app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        Console.WriteLine("MIGRANDO BD");
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<AppDbContext>();
+
+        db.Database.Migrate();
+
+        Console.WriteLine("MIGRACION OK");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
+        throw;
+    }
+}
 app.Run();
